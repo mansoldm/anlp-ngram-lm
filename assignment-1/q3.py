@@ -1,4 +1,3 @@
-#Here are some libraries you're likely to use. You might want/need others as well.
 import re
 import sys
 import re
