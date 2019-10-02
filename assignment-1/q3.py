@@ -7,8 +7,11 @@ from math import log
 from collections import defaultdict
 import numpy as np
 import utils
+import itertools
 
 num_chars = 29
+d = num_chars ** 3
+
 indices = {}
 indices[' '] = 0
 indices['.'] = 1
@@ -32,6 +35,33 @@ def map_to_char(index):
     print('not implemented')
 
 def add_alpha(docs, alpha):
+    probs = defaultdict(float)
+    denoms = defaultdict(float)
+    for doc in docs:
+        ngrams = utils.get_ngrams(doc, 3)
+        for ngram in ngrams: 
+            probs[ngram] += 1
+            
+            # third (and 'most recent') char is summed out
+            denoms[ngram[:-1]] += 1
+    
+    # add smoothing
+    for ngram, _ in probs.items():
+        probs[ngram] += alpha
+    
+    alpha_d = alpha * d
+    for c1c2, _ in denoms.items():
+        denoms[c1c2] += alpha_d
+
+    # estimate probs
+    for ngram, num in probs.items():
+        probs[ngram] = num/denoms[ngram[:-1]]
+
+    return probs
+
+    
+
+def add_alpha_vec(docs, alpha):
     # for each doc, get n grams
         # compute ngram counts + total count
     # add alpha to each
@@ -49,20 +79,24 @@ def add_alpha(docs, alpha):
     probs = probs + alpha
     den = N + alpha*(num_chars ** 3)
     den = np.stack([den for _ in range(num_chars)], axis=2)
-    probs = np.log(probs / den)
+    probs = probs / den
 
     return probs
 
 def train_model(train, val, alpha_range):
     max_alpha = alpha_range[0]
     curr_prob = 0
-    val_ngrams = [utils.get_ngrams(val_sen, 3) for val_sen in val]
+
+    # get ngrams for each document of validation set and flatten array
+    val_ngrams_2d = [utils.get_ngrams(val_sen, 3) for val_sen in val]
+    val_ngrams = list(itertools.chain(*val_ngrams_2d))
+    
+    # convert to indices
     val_i = [map_to_index(ngram) for ngram in val_ngrams if len(ngram) == 3]
     for alpha in alpha_range:
-        probs = add_alpha(train, alpha)
-        
+        probs = add_alpha_vec(train, alpha)
         val_probs = [probs[i] for i in val_i]
-        sum_probs = np.exp(np.prod(val_probs))
+        sum_probs = np.sum(val_probs)
         print('alpha = {}, sum_probs = {}'.format(alpha, sum_probs))
         if curr_prob < sum_probs:
             curr_prob, max_alpha = sum_probs, alpha
@@ -111,7 +145,7 @@ with open(infile) as f:
 np.random.seed(10)
 np.random.shuffle(docs)
 N = len(docs)
-alpha_range = np.arange(0.05, 1.05, 0.05)
+alpha_range = np.arange(0.05, 2.05, 0.05)
 
 tr_i, val_i, te_i = int(N*.8), int(N*.9), int(N)
 train_s, val, test = docs[:tr_i], docs[tr_i:val_i], docs[val_i:]
@@ -127,17 +161,5 @@ train_model(train_s, val, alpha_range)
 # print("Trigram counts in ", infile, ", sorted numerically:")
 # for tri_count in sorted(tri_counts.items(), key=lambda x:x[1], reverse = True):
 #     print(tri_count[0], ": ", str(tri_count[1]))
-cube = np.zeros((2, 2, 2))
-cube[0, :, :] = 5
-cube[1, :, :] = 5
-s = np.array([[1, 2],[3, 4]])
-s = [s for _ in range(3)]
-s= np.stack(s, axis=0)
-# s = np.sum(cube, axis=2)
-# print(cube/s)
-print(s)
-# print(cube)
-# print(s.shape)
-
 
 

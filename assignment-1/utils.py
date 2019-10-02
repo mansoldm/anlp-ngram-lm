@@ -8,7 +8,7 @@ from collections import defaultdict
 from functools import reduce
 
 
-def get_ngrams(w, N) -> list:
+def get_ngrams(w, N):
     assert len(w) >= N
     return [w[i:i+N] for i in range(len(w)-N)]
 
