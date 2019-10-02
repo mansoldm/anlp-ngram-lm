@@ -32,12 +32,15 @@ infile = sys.argv[1] #get input argument: the training file
 #beginning and end of each line. Depending on how you write the rest of
 #your program, you may need to modify this code.
 with open(infile) as f:
+    prev_chars = ""
     for line in f:
-        line = preprocess_line(line) #doesn't do anything yet.
-        print(line)
+        # keep context from prev line
+        line = prev_chars + line
+        line = preprocess_line(line) 
         for j in range(len(line)-(3)):
             trigram = line[j:j+3]
             tri_counts[trigram] += 1
+        prev_chars = line[-2:]
 
 #Some example code that prints out the counts. For small input files
 #the counts are easy to look at but for larger files you can redirect
