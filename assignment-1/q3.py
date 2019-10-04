@@ -10,13 +10,8 @@ import itertools
 
 num_chars = 29
 d = num_chars ** 3
-
-indices = {}
-indices[' '] = 0
-indices['.'] = 1
-indices['0'] = 2
-for i in range(ord('a'), ord('z')+1):
-    indices[chr(i)] = i - ord('a') + 3
+charset = ' .0abcdefghijklmnopqrstuvwxyz'
+indices = {c:i for i, c in enumerate(charset)}
 
 # generate csv of indices
 
@@ -81,7 +76,7 @@ def add_alpha_vec(docs, alpha):
     N = np.sum(probs, axis=2)
     # print(N)
     probs = probs + alpha
-    den = N + alpha*(num_chars ** 3)
+    den = N + alpha * (num_chars ** 3)
     den = np.stack([den for _ in range(num_chars)], axis=2)
     probs = probs / den
 
@@ -101,7 +96,7 @@ def train_model(train, val, alpha_range):
     for alpha in alpha_range:
         probs = add_alpha_vec(train, alpha)
         val_probs = [probs[i] for i in val_i]
-        sum_probs = np.sum(val_probs)
+        sum_probs = sum(val_probs)
         print('alpha = {}, sum_probs = {}'.format(alpha, sum_probs))
         if curr_prob < sum_probs:
             curr_prob, max_alpha = sum_probs, alpha
