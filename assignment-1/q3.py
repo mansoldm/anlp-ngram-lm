@@ -62,6 +62,10 @@ def generate_from_LM(N, probs):
             else :
                 break
 
+        
+        if j == len(sorted_tuples) - 1:
+            j -= np.random.randint(0, 5)    
+
         rdint = np.random.randint(j, len(sorted_tuples))    
         max_tuple = sorted_tuples[rdint]
 
@@ -91,7 +95,7 @@ def add_alpha(docs, alpha):
     
     # add smoothing
     # trigrams
-    alpha_d = alpha * d
+    alpha_d = alpha * num_chars
     for c1 in charset:
         for c2 in charset:
             for c3 in charset:
@@ -159,11 +163,7 @@ if len(sys.argv) != 2:
 infile = sys.argv[1]  # get input argument: the training file
 lang = infile.split('.')[-1]
 
-# This bit of code gives an example of how you might extract trigram counts
-# from a file, line by line. If you plan to use or modify this code,
-# please ensure you understand what it is actually doing, especially at the
-# beginning and end of each line. Depending on how you write the rest of
-# your program, you may need to modify this code.
+
 docs = []
 split = 0.8, .1, .1
 with open(infile) as f:
@@ -182,12 +182,15 @@ with open(infile) as f:
 np.random.shuffle(docs)
 N = len(docs)
 # alpha_range = [.1, .01, .001 ,.0001, .00001]
-alpha_range = [.01]
+alpha_range = [.001]
 
 tr_i, val_i, te_i = int(N*.8), int(N*.9), int(N)
 train_s, val, test = docs[:tr_i], docs[tr_i:val_i], docs[val_i:]
 
 probs = train_model(train_s, val, alpha_range)
+
+print(probs['e '])
+
 print(generate_from_LM(300, probs))
 
 # Some example code that prints out the counts. For small input files
