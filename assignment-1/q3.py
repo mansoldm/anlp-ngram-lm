@@ -5,31 +5,34 @@ from random import random, choice
 from math import log
 from collections import defaultdict
 import numpy as np
-import utils
 import itertools
+import data_processing
 
 num_chars = 29
 d = num_chars ** 3
 charset = ' .0abcdefghijklmnopqrstuvwxyz'
 indices = {c:i for i, c in enumerate(charset)}
 
-# generate csv of indices
-
-
 def save_model(probs, lang):
-    f = open('model.'+lang, 'w+')
-    for k, v in probs:
-        f.write('{} {}'.format(k, v))
+    f = open('data/model.'+lang, 'w+')
+    for k, v in sorted(probs.items()):
+        for c, p in sorted(v.items()):
+            f.write('{}${}\n'.format(k+c, p))
     f.close()
 
 
 def read_model(lang):
-    f = open('data/model-br.'+lang, 'r')
-    probs = defaultdict(float)
+    f = open('data/model.'+lang, 'r')
+    probs = defaultdict(dict)
     for line in f:
-        k, v = line.split('\t')
-        probs[k] = float(v)
-
+        k, v = line.split('$')
+        c12, c3 = k[:2], k[2]
+        if c12 in probs:
+            probs[c12][c3] = float(v) 
+        else: 
+            new_d = {}
+            new_d[c3] = float(v)
+            probs[c12] = new_d
     return probs
 
 
@@ -83,8 +86,8 @@ def add_alpha(docs, alpha):
     trigram_smoothed = defaultdict(dict)
     bigram_counts = defaultdict(float)
     for doc in docs:
-        ngrams = utils.get_ngrams(doc, 3)
-        bigrams = utils.get_ngrams(doc, 2)
+        ngrams = data_processing.get_ngrams(doc, 3)
+        bigrams = data_processing.get_ngrams(doc, 2)
 
         for ngram in ngrams:
             trigram_counts[ngram] += 1
@@ -120,7 +123,7 @@ def train_model(train, val, alpha_range):
     curr_prob = 0
 
     # get ngrams for each document of validation set and flatten array
-    val_ngrams_2d = [utils.get_ngrams(val_sen, 3) for val_sen in val]
+    val_ngrams_2d = [data_processing.get_ngrams(val_sen, 3) for val_sen in val]
     val_ngrams = list(itertools.chain(*val_ngrams_2d))
 
     probs = []
@@ -188,17 +191,9 @@ tr_i, val_i, te_i = int(N*.8), int(N*.9), int(N)
 train_s, val, test = docs[:tr_i], docs[tr_i:val_i], docs[val_i:]
 
 probs = train_model(train_s, val, alpha_range)
+save_model(probs, lang)
 
 print(probs['e '])
-
 print(generate_from_LM(300, probs))
 
-# Some example code that prints out the counts. For small input files
-# the counts are easy to look at but for larger files you can redirect
-# to an output file (see Lab 1).
-# print("Trigram counts in ", infile, ", sorted alphabetically:")
-# for trigram in sorted(tri_counts.keys()):
-#     print(trigram, ": ", tri_counts[trigram])
-# print("Trigram counts in ", infile, ", sorted numerically:")
-# for tri_count in sorted(tri_counts.items(), key=lambda x:x[1], reverse = True):
-#     print(tri_count[0], ": ", str(tri_count[1]))
+print(data_processing.perplexity(generate_from_LM(300, probs), 3, probs))

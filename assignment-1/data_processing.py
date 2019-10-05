@@ -16,7 +16,7 @@ def get_ngrams(w, N):
 def prob_w(w, N, probs):
     ngrams = get_ngrams(w, N)
     # convert each ngram to its corresponding probability
-    w_probs = [probs[ngram] for ngram in ngrams]
+    w_probs = [probs[ng[:2]][ng[2]] for ng in ngrams]
     return reduce(operator.mul, w_probs)
 
 
