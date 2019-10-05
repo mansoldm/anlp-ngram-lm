@@ -1,7 +1,7 @@
 import re
 import sys
 import re
-from random import random, choice
+from random import random, choice, randint
 from math import log
 from collections import defaultdict
 import numpy as np
@@ -17,15 +17,17 @@ indices = {c:i for i, c in enumerate(charset)}
 perms = list(itertools.product(*([charset]*3)))
 
 def generate_from_LM(N, probs):
-    c1, c2 = '.', ' '
+    c1 = charset[randint(0, num_chars - 1)]
+    c2 = charset[randint(0, num_chars - 1)]
 
-    gen_lst = [0 for _ in range(N+2)]
-    gen_lst[0] = c1
-    gen_lst[1] = c2
-    for i in range(N):
+    gen_lst = [c1, c2]
+    for _ in range(N):
         bigram = str(c1) + str(c2)
-        probs_bigram = probs[bigram]
-        sorted_tuples = sorted(probs_bigram.items(), key=lambda x:x[1])
+        # convert dict of 'continuations' to list of (char, prob) tuples
+        probs_bigram = probs[bigram].items()
+
+        # sort ascendingly by probability
+        sorted_tuples = sorted(probs_bigram, key=lambda x:x[1])
         max_p = sorted_tuples[-1]
 
         j = len(sorted_tuples)
@@ -38,11 +40,10 @@ def generate_from_LM(N, probs):
         if j == len(sorted_tuples) - 1:
             j -= np.random.randint(0, 5)    
 
-        rdint = np.random.randint(j, len(sorted_tuples))    
-        max_tuple = sorted_tuples[rdint]
+        rdint = randint(j, len(sorted_tuples) - 1)    
+        max_char = sorted_tuples[rdint][0]
 
-        max_char = max_tuple[0]
-        gen_lst[i+2] = (str(max_char))
+        gen_lst.append(str(max_char))
 
         c1 = c2
         c2 = max_char

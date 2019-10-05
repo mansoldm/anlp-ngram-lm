@@ -2,7 +2,7 @@ from collections import defaultdict
 import re
 
 charset_rgx = r'[^a-zA-Z\d .]'
-digits_rgx = '[0-9]'
+digits_rgx = r'\d'
 
 def save_model(probs, lang):
     f = open('data/model.'+lang, 'w+')
@@ -10,8 +10,6 @@ def save_model(probs, lang):
         for c, p in sorted(v.items()):
             f.write('{}${}\n'.format(k+c, p))
     f.close()
-
-
 
 def read_model(lang):
     f = open('data/model.'+lang, 'r')
@@ -50,6 +48,7 @@ def read_file(infile, N):
         prev_chars = ""
         for line in f:
             # keep context from prev line
+            line = prev_chars + line
             line = preprocess_line(line)
             docs.append(line)
             prev_chars = line[-2:]
