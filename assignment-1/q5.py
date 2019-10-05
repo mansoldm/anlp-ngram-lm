@@ -73,7 +73,6 @@ def add_alpha(docs, alpha):
         bigram = c1+c2
         trigram = bigram + c3
 
-
         addend = (trigram_counts[trigram] + alpha) / (bigram_counts[bigram] + alpha_d)
         nested_d = trigram_smoothed[bigram]
         if c3 in nested_d:
@@ -98,8 +97,7 @@ def train_model(train, val, alpha_range):
 
     for alpha in alpha_range:
         probs = add_alpha(train, alpha)
-
-        res = probs.values()
+        print(data_processing.sum_probs(probs))
         # sum = 0
         # for c in res : sum += c
         # print(sum)

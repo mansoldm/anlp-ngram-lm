@@ -7,6 +7,12 @@ from random import random
 from collections import defaultdict
 from functools import reduce
 
+def sum_probs(probs):
+    result = 0
+    for _, d in probs.items():
+        for _, p in d.items():
+            result += p
+    return result
 
 def get_ngrams(w, N):
     assert len(w) >= N
