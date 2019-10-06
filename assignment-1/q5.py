@@ -96,8 +96,12 @@ def train_model(train, val, alpha_range):
         val_f = data_processing.flatten(val)
         val_ngrams = data_processing.get_ngrams(val_f, 3)
 
+        train_f = data_processing.flatten(train)
+        train_ngrams = data_processing.get_ngrams(train_f, 3)
+
         val_perplexity = data_processing.perplexity(val_ngrams, probs)
-        print('alpha: {}, val_perplexity: {}'.format(alpha, val_perplexity))
+        train_perplexity = data_processing.perplexity(train_ngrams, probs)
+        print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(alpha, val_perplexity, train_perplexity))
 
         if opt_perp > val_perplexity:
             opt_perp = val_perplexity
