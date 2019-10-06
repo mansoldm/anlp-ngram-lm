@@ -7,10 +7,10 @@ from collections import defaultdict
 import numpy as np
 import data_processing, file_utils
 
-num_chars = 29
-d = num_chars ** 3
 
 charset = ' .0abcdefghijklmnopqrstuvwxyz'
+num_chars = len(charset)
+d = num_chars ** 3
 indices = {c:i for i, c in enumerate(charset)}
 
 perms = data_processing.perms(list(charset), 3)
