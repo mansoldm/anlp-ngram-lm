@@ -42,15 +42,10 @@ def preprocess_line(line):
     return lc
 
 
-def read_file(infile, N):
+def read_file(infile):
     docs = []
     with open(infile) as f:
-        prev_chars = ""
         for line in f:
-            # keep context from prev line
-            line = prev_chars + line
             line = preprocess_line(line)
             docs.append(line)
-            prev_chars = line[-2:]
-
     return docs

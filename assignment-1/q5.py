@@ -6,7 +6,6 @@ from math import log
 from collections import defaultdict
 import numpy as np
 import data_processing, file_utils
-import itertools
 
 num_chars = 29
 d = num_chars ** 3
@@ -14,7 +13,7 @@ d = num_chars ** 3
 charset = ' .0abcdefghijklmnopqrstuvwxyz'
 indices = {c:i for i, c in enumerate(charset)}
 
-perms = list(itertools.product(*([charset]*3)))
+perms = data_processing.perms(list(charset), 3)
 
 def generate_from_LM(N, probs):
     c1 = charset[randint(0, num_chars - 1)]
@@ -86,37 +85,36 @@ def add_alpha(docs, alpha):
 
 
 def train_model(train, val, alpha_range):
-    max_alpha = alpha_range[0]
-    curr_prob = 0
-
-    # get ngrams for each document of validation set and flatten array
-    val_ngrams_2d = [data_processing.get_ngrams(val_sen, 3) for val_sen in val]
-    val_ngrams = list(itertools.chain(*val_ngrams_2d))
-
-    probs = []
-
+    # initialise to 'infinity'
+    opt_perp, opt_alpha = float('inf'), float('inf')
+    opt_probs = []
     for alpha in alpha_range:
         probs = add_alpha(train, alpha)
-        print(data_processing.sum_probs(probs))
-        # sum = 0
-        # for c in res : sum += c
-        # print(sum)
 
-        # val_probs = [probs[i] for i in val_ngrams]
-        # sum_probs = np.sum(val_probs)
-        # if curr_prob < sum_probs:
-        #     curr_prob, max_alpha = sum_probs, alpha
+        val_f = data_processing.flatten(val)
+        val_ngrams = data_processing.get_ngrams(val_f, 3)
 
-    return probs
+        val_perplexity = data_processing.perplexity(val_ngrams, probs)
+        print('alpha: {}, val_perplexity: {}'.format(alpha, val_perplexity))
+
+        if opt_perp > val_perplexity:        
+            opt_perp = val_perplexity
+            opt_alpha = alpha
+            opt_probs = probs
+
+    return opt_probs, opt_alpha
     
 
 if len(sys.argv) <= 2 :
-    print('Not enough arguments!')
+    print('Usage: ', sys.argv[0])
+    print('        train    <training_file> <language>')
+    print('        generate <language>')
+    print('        perp     <document_file> <language>')
     sys.exit()
 
 
 task = sys.argv[1] # 'train' or 'generate'
- # remove script name and task type 'e.g. q5.py train'
+ # 'remove' script name and task type 'e.g. q5.py train'
 argnum = len(sys.argv) - 2
 
 if task == 'train':
@@ -128,21 +126,28 @@ if task == 'train':
     infile = sys.argv[2] 
     lang = sys.argv[3]
 
-    docs = file_utils.read_file(infile, 300)
+    docs = file_utils.read_file(infile)
     N = len(docs)
+
     # np.random.seed(10)
     np.random.shuffle(docs)
-
-    alpha_range=[.00001, .0001, .001, .01, .1]
-
+    # alpha_range=[.00001, .0001, .001, .01, .1]
+    # alpha_range = [i/20 for i in range(1, 21)]
+    alpha_range = [0.00001 * 1.2**i for i in range(20)]
 
     # split data
     tr_i, val_i = int(N*.8), int(N*.9)
     train, val, test = docs[:tr_i], docs[tr_i:val_i], docs[val_i:]
 
-    probs = train_model(train, val, alpha_range)
-    file_utils.save_model(probs, lang)
+    # get optimum model through alpha grid search, perform test and save
+    probs, alpha = train_model(train, val, alpha_range)
+    test_perplexity = data_processing.perplexity(test, probs)
+    print('******** RESULT ********')
+    print('Alpha:           {}'.format(alpha))
+    print('Test perplexity: {}'.format(test_perplexity))
+    print('************************')
 
+    file_utils.save_model(probs, lang)
     print('Model saved at \'data/model.{}\''.format(lang))
 
 elif task == 'generate':
@@ -153,8 +158,24 @@ elif task == 'generate':
     lang = sys.argv[2]
     probs = file_utils.read_model(lang)
     w_gen = generate_from_LM(300, probs)
-
     print(w_gen)
-    print(data_processing.perplexity(w_gen, 3, probs))
 
-else : print('Task must either be \'train\' or \'generate\'')
+elif task == 'perp':
+
+    if argnum != 2 :
+        print('Calculating document perplexity needs 2 arguments, got {}'.format(argnum))
+
+    in_file = sys.argv[2]
+    lang = sys.argv[3]
+
+    f_doc = data_processing.flatten(file_utils.read_file(infile))
+    doc_ngrams = data_processing.get_ngrams(f_doc, 3)
+    perplexity = data_processing.perplexity(doc_ngrams, probs)
+    print('Perplexity: {}'.format(perplexity))
+
+else : print('Task must be \'train\', \'generate\' or \'perplexity\'')
+
+# grid test for alpha in each language model against 10% validation set
+# compute perplexity (sum of -log2 ) for the test document for each optimum model
+# - right after training
+# 
