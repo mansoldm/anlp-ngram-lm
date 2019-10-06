@@ -51,6 +51,7 @@ def entropy(ngrams, probs):
 
     return -1/N * sum(log_probs)
 
+
 def perplexity(ngrams, probs):
     '''Calculates perplexity of given sequence of ngrams'''
     return 2**entropy(ngrams, probs)

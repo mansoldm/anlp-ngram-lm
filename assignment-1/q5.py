@@ -5,15 +5,17 @@ from random import random, choice, randint
 from math import log
 from collections import defaultdict
 import numpy as np
-import data_processing, file_utils
+import data_processing
+import file_utils
 
 
 charset = ' .0abcdefghijklmnopqrstuvwxyz'
 num_chars = len(charset)
 d = num_chars ** 3
-indices = {c:i for i, c in enumerate(charset)}
+indices = {c: i for i, c in enumerate(charset)}
 
 perms = data_processing.perms(list(charset), 3)
+
 
 def generate_from_LM(N, probs):
     c1 = charset[randint(0, num_chars - 1)]
@@ -26,20 +28,20 @@ def generate_from_LM(N, probs):
         probs_bigram = probs[bigram].items()
 
         # sort ascendingly by probability
-        sorted_tuples = sorted(probs_bigram, key=lambda x:x[1])
+        sorted_tuples = sorted(probs_bigram, key=lambda x: x[1])
         max_p = sorted_tuples[-1]
 
         j = len(sorted_tuples)
         for k in reversed(range(len(sorted_tuples))):
             if sorted_tuples[k] == max_p:
-                j-=1
-            else :
+                j -= 1
+            else:
                 break
-        
-        if j == len(sorted_tuples) - 1:
-            j -= np.random.randint(0, 5)    
 
-        rdint = randint(j, len(sorted_tuples) - 1)    
+        if j == len(sorted_tuples) - 1:
+            j -= np.random.randint(0, 5)
+
+        rdint = randint(j, len(sorted_tuples) - 1)
         max_char = sorted_tuples[rdint][0]
 
         gen_lst.append(str(max_char))
@@ -50,7 +52,7 @@ def generate_from_LM(N, probs):
     return ''.join(gen_lst)
 
 
-def add_alpha(docs, alpha):    
+def add_alpha(docs, alpha):
     trigram_counts = defaultdict(float)
     trigram_smoothed = defaultdict(dict)
     bigram_counts = defaultdict(float)
@@ -64,7 +66,6 @@ def add_alpha(docs, alpha):
         for bigram in bigrams:
             bigram_counts[bigram] += 1
 
-    
     # add smoothing
     # trigrams
     alpha_d = alpha * num_chars
@@ -72,12 +73,13 @@ def add_alpha(docs, alpha):
         bigram = c1+c2
         trigram = bigram + c3
 
-        addend = (trigram_counts[trigram] + alpha) / (bigram_counts[bigram] + alpha_d)
+        addend = (trigram_counts[trigram] + alpha) / \
+            (bigram_counts[bigram] + alpha_d)
         nested_d = trigram_smoothed[bigram]
         if c3 in nested_d:
             nested_d[c3] += addend
-        else :
-            nested_d[c3] = addend 
+        else:
+            nested_d[c3] = addend
 
         trigram_smoothed[bigram] = nested_d
 
@@ -97,15 +99,15 @@ def train_model(train, val, alpha_range):
         val_perplexity = data_processing.perplexity(val_ngrams, probs)
         print('alpha: {}, val_perplexity: {}'.format(alpha, val_perplexity))
 
-        if opt_perp > val_perplexity:        
+        if opt_perp > val_perplexity:
             opt_perp = val_perplexity
             opt_alpha = alpha
             opt_probs = probs
 
     return opt_probs, opt_alpha
-    
 
-if len(sys.argv) <= 2 :
+
+if len(sys.argv) <= 2:
     print('Usage: ', sys.argv[0])
     print('        train    <training_file> <language>')
     print('        generate <language>')
@@ -113,8 +115,8 @@ if len(sys.argv) <= 2 :
     sys.exit()
 
 
-task = sys.argv[1] # 'train' or 'generate'
- # 'remove' script name and task type 'e.g. q5.py train'
+task = sys.argv[1]  # 'train' or 'generate'
+# 'remove' script name and task type 'e.g. q5.py train'
 argnum = len(sys.argv) - 2
 
 if task == 'train':
@@ -123,7 +125,7 @@ if task == 'train':
         print('Training needs 2 arguments, got {}'.format(argnum))
         sys.exit()
 
-    infile = sys.argv[2] 
+    infile = sys.argv[2]
     lang = sys.argv[3]
 
     docs = file_utils.read_file(infile)
@@ -162,20 +164,23 @@ elif task == 'generate':
 
 elif task == 'perp':
 
-    if argnum != 2 :
+    if argnum != 2:
         print('Calculating document perplexity needs 2 arguments, got {}'.format(argnum))
 
-    in_file = sys.argv[2]
+    infile = sys.argv[2]
     lang = sys.argv[3]
 
     f_doc = data_processing.flatten(file_utils.read_file(infile))
     doc_ngrams = data_processing.get_ngrams(f_doc, 3)
+    probs = file_utils.read_model(lang)
+
     perplexity = data_processing.perplexity(doc_ngrams, probs)
     print('Perplexity: {}'.format(perplexity))
 
-else : print('Task must be \'train\', \'generate\' or \'perplexity\'')
+else:
+    print('Task must be \'train\', \'generate\' or \'perplexity\'')
 
 # grid test for alpha in each language model against 10% validation set
 # compute perplexity (sum of -log2 ) for the test document for each optimum model
 # - right after training
-# 
+#
