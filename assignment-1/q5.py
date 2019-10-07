@@ -44,13 +44,13 @@ def generate_from_LM(N, probs):
 
         rdint = randint(j, len(sorted_tuples) - 1)
         max_char = sorted_tuples[rdint][0]
-    
-        if max_char == '#': max_char = '\n'
+
+        if max_char == '#':
+            max_char = '\n'
         gen_lst.append(str(max_char))
 
         c1 = c2
         c2 = max_char
-
 
     return ''.join(gen_lst)[2:]
 
@@ -104,7 +104,8 @@ def train_model(train, val, alpha_range):
 
         val_perplexity = data_processing.perplexity(val_ngrams, probs)
         train_perplexity = data_processing.perplexity(train_ngrams, probs)
-        print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(alpha, val_perplexity, train_perplexity))
+        print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(
+            alpha, val_perplexity, train_perplexity))
 
         if opt_perp > val_perplexity:
             opt_perp = val_perplexity
