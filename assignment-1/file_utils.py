@@ -3,13 +3,14 @@ import re
 
 charset_rgx = r'[^a-zA-Z\d .]'
 digits_rgx = r'\d'
+separator = '\t'
 
 
 def save_model(probs, lang):
     f = open('data/model.'+lang, 'w+')
     for k, v in sorted(probs.items()):
         for c, p in sorted(v.items()):
-            f.write('{}${}\n'.format(k+c, p))
+            f.write('{}{}{}\n'.format(k+c, separator, p))
     f.close()
 
 
@@ -17,7 +18,7 @@ def read_model(lang):
     f = open('data/model.'+lang, 'r')
     probs = defaultdict(dict)
     for line in f:
-        k, v = line.split('$')
+        k, v = line.split(separator)
         c12, c3 = k[:2], k[2]
         if c12 in probs:
             probs[c12][c3] = float(v)
