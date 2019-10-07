@@ -9,7 +9,7 @@ import data_processing
 import file_utils
 
 
-charset = ' .0abcdefghijklmnopqrstuvwxyz'
+charset = ' .0abcdefghijklmnopqrstuvwxyz#'
 num_chars = len(charset)
 d = num_chars ** 3
 indices = {c: i for i, c in enumerate(charset)}
@@ -18,9 +18,10 @@ perms = data_processing.perms(list(charset), 3)
 
 
 def generate_from_LM(N, probs):
-    c1 = charset[randint(0, num_chars - 1)]
-    c2 = charset[randint(0, num_chars - 1)]
+    # c1 = charset[randint(0, num_chars - 1)]
+    # c2 = charset[randint(0, num_chars - 1)]
 
+    c1, c2 = '#', '#'
     gen_lst = [c1, c2]
     for _ in range(N):
         bigram = str(c1) + str(c2)
@@ -43,13 +44,15 @@ def generate_from_LM(N, probs):
 
         rdint = randint(j, len(sorted_tuples) - 1)
         max_char = sorted_tuples[rdint][0]
-
+    
+        if max_char == '#': max_char = '\n'
         gen_lst.append(str(max_char))
 
         c1 = c2
         c2 = max_char
 
-    return ''.join(gen_lst)
+
+    return ''.join(gen_lst)[2:]
 
 
 def add_alpha(docs, alpha):
@@ -139,7 +142,7 @@ if task == 'train':
     np.random.shuffle(docs)
     # alpha_range=[.00001, .0001, .001, .01, .1]
     # alpha_range = [i/20 for i in range(1, 21)]
-    alpha_range = [0.00001 * 1.2**i for i in range(20)]
+    alpha_range = [1/(1.2**i) for i in range(20)]
 
     # split data
     tr_i, val_i = int(N*.8), int(N*.9)

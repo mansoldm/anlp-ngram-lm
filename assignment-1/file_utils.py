@@ -41,6 +41,7 @@ def preprocess_line(line):
     filtered_chars = re.sub(charset_rgx, '', line)
     replaced_nums = re.sub(digits_rgx, '0', filtered_chars)
     lc = replaced_nums.lower()
+    lc = '##' + lc + '#'
     return lc
 
 
