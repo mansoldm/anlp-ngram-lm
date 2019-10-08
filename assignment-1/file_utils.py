@@ -8,17 +8,27 @@ digits_rgx = r'\d'
 separator = '\t'
 
 
-def save_model_vec(probs, lang):
-    with open('data/model-vec.{}'.format(lang), 'w+') as outfile:
-        for prob in probs:
-            np.savetxt(outfile, prob)
-            outfile.write('\n')
+# def save_model_vec(probs, lang):
+#     with open('data/model-vec.{}'.format(lang), 'w+') as f:
+#         for prob in probs:
+#             np.savetxt(f, prob)
+#             f.write('\n')
 
 
-def read_model_vec(lang, shape):
-    probs = np.loadtxt('data/model-vec.{}'.format(lang))
+# def read_model_vec(lang, shape):
+#     probs = np.loadtxt('data/model-vec.{}'.format(lang))
+#     return probs.reshape(shape)
+
+def save_model_vec(probs, lang, n):
+    # with open('data/model-vec.{}'.format(lang), 'wb') as f:
+    np.savez('data/model-vec.{}.{}'.format(lang, n), probs=probs)
+
+
+def read_model_vec(lang, shape, n):
+    # with open('data/model-vec.{}'.format(lang)) as f:
+    p = np.load('data/model-vec.{}.{}.npz'.format(lang, n))
+    probs = p['probs']
     return probs.reshape(shape)
-
 
 def save_model(probs, lang):
     with open('data/model.'+lang, 'w+') as f:

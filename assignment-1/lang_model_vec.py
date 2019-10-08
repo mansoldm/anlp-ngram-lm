@@ -10,23 +10,35 @@ import file_utils
 
 charset = ' .0abcdefghijklmnopqrstuvwxyz#'
 num_chars = len(charset)
-indices = {c: i for i, c in enumerate(charset)}
-
-perms = data_processing.perms(list(charset), 3)
+char_to_index = {c: i for i, c in enumerate(charset)}
 
 
-def generate_from_LM_vec(N, probs):
-    c0, c1 = '#', '#'
-    gen_lst = [c0, c1]
+def generate_from_LM_vec(num_to_generate, probs, n):
+    chars = '##'
+    other = ''.join([charset[randint(0, num_chars-1)] for i in range(n-3)])
+    chars += other
+    gen_lst = list(chars)
 
-    t = indices['#']
-    i0, i1 = t, t
-    for _ in range(N):
+    # 'sliding window': indices will contain the context 
+    # i.e. the indices of the n-1 most recent chars
+    indices = [char_to_index[c] for c in chars]
+    for _ in range(num_to_generate):
+
+        # iterate through each dimension down to the dimension of continuations
+        probs_contin = probs
+        for i in range(min(len(indices), n-1)):
+            ind = indices[i]
+            probs_contin = probs_contin[ind]
+
         # get array of 'continuations' and keep original indices
-        probs_contin = list(enumerate(probs[i0, i1, :]))
+        probs_contin = list(enumerate(probs_contin))
+
+        if probs_contin.count(probs_contin[0]) == len(probs_contin):
+            print("all equal")
 
         # sort ascendingly by probability
         sorted_tuples = sorted(probs_contin, key=lambda x: x[1])
+
         max_p = sorted_tuples[-1][1]
 
         j = len(sorted_tuples)
@@ -47,41 +59,47 @@ def generate_from_LM_vec(N, probs):
             max_char = '\n'
         gen_lst.append(str(max_char))
 
-        i0 = i1
-        i1 = max_i
+        # slide window forward
+        indices.append(max_i)
+        indices = indices[1:]
 
+    # make string and omit the starting ##
     return ''.join(gen_lst)[2:]
 
 
-def add_alpha_vec(ngram_is, alpha):
-    probs = np.zeros((num_chars, num_chars, num_chars))
-    for (i0, i1, i2) in ngram_is:
-        probs[i0, i1, i2] += 1
+def add_alpha_vec(ngram_is, alpha, n):
+    probs = np.zeros((num_chars,)*n)
 
-    N = np.sum(probs, axis=2)
+    for indices in ngram_is:
+        p = probs
+        for i in indices[:-1]:
+            p = p[i]
+        p[indices[-1]] += 1
+
+    N = np.sum(probs, axis=n-1)
     probs = probs + alpha
     den = N + (alpha * num_chars)
-    den_m = np.stack([den for _ in range(num_chars)], axis=2)
+    den_m = np.stack([den for _ in range(num_chars)], axis=n-1)
     probs = probs / den_m
     return probs
 
 
-def train_model(train, val, alpha_range):
+def train_model(train, val, alpha_range, n):
     # initialise to 'infinity'
     opt_perp, opt_alpha = float('inf'), float('inf')
     opt_probs = []
 
     val_f = data_processing.to_string(val)
-    val_ngrams = data_processing.get_ngrams(val_f, 3)
-    val_ngram_is = data_processing.ngrams_to_indices(val_ngrams, indices)
+    val_ngrams = data_processing.get_ngrams(val_f, n)
+    val_ngram_is = data_processing.ngrams_to_indices(val_ngrams, char_to_index)
 
     train_f = data_processing.to_string(train)
-    train_ngrams = data_processing.get_ngrams(train_f, 3)
-    train_ngram_is = data_processing.ngrams_to_indices(train_ngrams, indices)
+    train_ngrams = data_processing.get_ngrams(train_f, n)
+    train_ngram_is = data_processing.ngrams_to_indices(train_ngrams, char_to_index)
 
     for alpha in alpha_range:
         # probs is a 3d matrix of probabilities
-        probs = add_alpha_vec(train_ngram_is, alpha)
+        probs = add_alpha_vec(train_ngram_is, alpha, n)
 
         val_perplexity = data_processing.perplexity_vec(val_ngram_is, probs)
         train_perplexity = data_processing.perplexity_vec(

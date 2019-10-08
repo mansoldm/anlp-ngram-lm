@@ -61,9 +61,16 @@ def perplexity(ngrams, probs):
 
 def entropy_vec(ngram_is, probs):
     N = len(ngram_is)
-    log_probs = np.log2(probs)
-    ngram_probs = np.array([log_probs[i0, i1, i2]
-                            for (i0, i1, i2) in ngram_is])
+    log_probs = np.array(np.log2(probs))
+    ngram_probs = []
+    for indices in ngram_is:
+        logp = log_probs
+        for i in indices:
+            logp = logp[i]
+        ngram_probs.append(logp)
+                
+    # ngram_probs = np.array([log_probs[indices]
+                            # for indices in ngram_is])
     return -1/N * np.sum(ngram_probs)
 
 
@@ -83,11 +90,8 @@ def map_to_char(indexes, charset):
     return ''.join(charset[i] for i in indexes)
 
 
-def indices_to_ngrams(mat, charset):
-    shape = np.shape(mat)
-    lst = []
-    for i in range(len(shape[0])):
-        for j in range(len(shape[1])):
-            for k in range(len(shape[2])):
-                lst.append(map_to_char((i, j, k), charset))
-    return lst
+def indices_to_ngrams(mat, charset, num_chars, n):
+    lst = list(range(num_chars))
+    cartprod = itertools.product(*(lst)*n)
+
+    return [map_to_char(indices, charset) for indices in cartprod]
