@@ -10,7 +10,7 @@ from functools import reduce
 import itertools
 
 
-def flatten(doc):
+def to_string(doc):
     '''Converts array of strings to string'''
     return ''.join(doc)
 
