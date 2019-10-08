@@ -11,7 +11,6 @@ import file_utils
 
 charset = ' .0abcdefghijklmnopqrstuvwxyz#'
 num_chars = len(charset)
-d = num_chars ** 3
 indices = {c: i for i, c in enumerate(charset)}
 
 perms = data_processing.perms(list(charset), 3)
@@ -51,13 +50,10 @@ def generate_from_LM_vec(N, probs):
     return ''.join(gen_lst)[2:]
 
 
-def add_alpha_vec(docs, alpha):
+def add_alpha_vec(ngram_is, alpha):
     probs = np.zeros((num_chars, num_chars, num_chars))
-    for doc in docs:
-        n_grams = data_processing.get_ngrams(doc, 3)
-        for ngram in n_grams:
-            i0, i1, i2 = data_processing.map_to_index(ngram, indices)
-            probs[i0, i1, i2] += 1
+    for (i0, i1, i2) in ngram_is:
+        probs[i0, i1, i2] += 1
 
     N = np.sum(probs, axis=2)
     probs = probs + alpha
@@ -82,7 +78,7 @@ def train_model(train, val, alpha_range):
 
     for alpha in alpha_range:
         # probs is a 3d matrix of probabilities
-        probs = add_alpha_vec(train, alpha)
+        probs = add_alpha_vec(train_ngram_is, alpha)
 
         val_perplexity = data_processing.perplexity_vec(val_ngram_is, probs)
         train_perplexity = data_processing.perplexity_vec(train_ngram_is, probs)

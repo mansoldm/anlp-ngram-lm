@@ -8,7 +8,7 @@ digits_rgx = r'\d'
 separator = '\t'
 
 def save_model_vec(probs, lang):
-    with open('model-vec.{}'.format(lang), 'w+') as outfile:
+    with open('data/model-vec.{}'.format(lang), 'w+') as outfile:
         for prob in probs:
             np.savetxt(outfile, prob)
             outfile.write('\n')

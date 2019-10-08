@@ -8,7 +8,6 @@ import numpy as np
 
 def add_alpha_training_vec(train, val, test):
     alpha_range = [1/(1.2**i) for i in range(20)]
-    print(len(val))
 
     # get optimum model through alpha grid search, perform test and save
     probs, alpha = lang_model_vec.train_model(train, val, alpha_range)
@@ -84,9 +83,10 @@ elif task == 'perp':
 
     f_doc = data_processing.to_string(file_utils.read_file(infile))
     doc_ngrams = data_processing.get_ngrams(f_doc, 3)
+    doc_ngram_is = data_processing.ngrams_to_indices(doc_ngrams, indices)
     probs = file_utils.read_model_vec(lang, (num_chars, num_chars, num_chars))
 
-    perplexity = data_processing.perplexity_vec(doc_ngrams, probs)
+    perplexity = data_processing.perplexity_vec(doc_ngram_is, probs)
     print('Perplexity: {}'.format(perplexity))
 
 else:
