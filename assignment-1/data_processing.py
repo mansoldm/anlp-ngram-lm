@@ -61,7 +61,7 @@ def perplexity(ngrams, probs):
 
 def entropy_vec(ngram_is, probs):
     N = len(ngram_is)
-    log_probs = - np.log2(probs)
+    log_probs = np.log2(probs)
     ngram_probs = np.array([log_probs[i1, i2, i3] for (i1, i2, i3) in ngram_is])
     return -1/N * np.sum(ngram_probs)
 

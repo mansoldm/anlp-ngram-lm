@@ -8,7 +8,6 @@ import numpy as np
 import data_processing
 import file_utils
 
-
 charset = ' .0abcdefghijklmnopqrstuvwxyz#'
 num_chars = len(charset)
 indices = {c: i for i, c in enumerate(charset)}
@@ -16,20 +15,22 @@ indices = {c: i for i, c in enumerate(charset)}
 perms = data_processing.perms(list(charset), 3)
 
 def generate_from_LM_vec(N, probs):
-    c1, c2 = '#', '#'
-    gen_lst = [c1, c2]
+    c0, c1 = '#', '#'
+    gen_lst = [c0, c1]
+
+    t = indices['#']
+    i0, i1 = t, t
     for _ in range(N):
-        bigram = str(c1) + str(c2)
-        # convert dict of 'continuations' to list of (char, prob) tuples
-        probs_bigram = probs[bigram].items()
+        # get array of 'continuations' and keep original indices
+        probs_contin = list(enumerate(probs[i0, i1, :]))
 
         # sort ascendingly by probability
-        sorted_tuples = sorted(probs_bigram, key=lambda x: x[1])
-        max_p = sorted_tuples[-1]
+        sorted_tuples = sorted(probs_contin, key=lambda x: x[1])
+        max_p = sorted_tuples[-1][1]
 
         j = len(sorted_tuples)
         for k in reversed(range(len(sorted_tuples))):
-            if sorted_tuples[k] == max_p:
+            if sorted_tuples[k][1] == max_p:
                 j -= 1
             else:
                 break
@@ -38,14 +39,15 @@ def generate_from_LM_vec(N, probs):
             j -= np.random.randint(0, 5)
 
         rdint = randint(j, len(sorted_tuples) - 1)
-        max_char = sorted_tuples[rdint][0]
+        max_i = sorted_tuples[rdint][0]
+        max_char = charset[max_i]
 
         if max_char == '#':
             max_char = '\n'
         gen_lst.append(str(max_char))
 
-        c1 = c2
-        c2 = max_char
+        i0 = i1
+        i1 = max_i
 
     return ''.join(gen_lst)[2:]
 
