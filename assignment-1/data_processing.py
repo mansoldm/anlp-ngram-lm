@@ -1,4 +1,3 @@
-# Here are some libraries you're likely to use. You might lineant/need others as lineell.
 import re
 import sys
 import operator

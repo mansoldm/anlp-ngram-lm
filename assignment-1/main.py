@@ -4,6 +4,21 @@ import lang_model
 import data_processing
 import numpy as np
 
+
+def add_alpha_training(train, val):
+    alpha_range = [1/(1.2**i) for i in range(20)]
+
+    # get optimum model through alpha grid search, perform test and save
+    probs, alpha = lang_model.train_model(train, val, alpha_range)
+    test_perplexity = data_processing.perplexity(test, probs)
+    print('******** RESULT ********')
+    print('Alpha:           {}'.format(alpha))
+    print('Test perplexity: {}'.format(test_perplexity))
+    print('************************')
+
+    return probs
+
+
 if len(sys.argv) <= 2:
     print('Usage: ', sys.argv[0])
     print('        train    <training_file> <language>')
@@ -30,19 +45,12 @@ if task == 'train':
 
     # np.random.seed(10)
     np.random.shuffle(docs)
-    alpha_range = [1/(1.2**i) for i in range(20)]
 
     # split data
     tr_i, val_i = int(N*.8), int(N*.9)
     train, val, test = docs[:tr_i], docs[tr_i:val_i], docs[val_i:]
 
-    # get optimum model through alpha grid search, perform test and save
-    probs, alpha = lang_model.train_model(train, val, alpha_range)
-    test_perplexity = data_processing.perplexity(test, probs)
-    print('******** RESULT ********')
-    print('Alpha:           {}'.format(alpha))
-    print('Test perplexity: {}'.format(test_perplexity))
-    print('************************')
+    probs = add_alpha_training(train, val)
 
     file_utils.save_model(probs, lang)
     print('Model saved at \'data/model.{}\''.format(lang))
