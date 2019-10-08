@@ -2,22 +2,29 @@ import sys
 import file_utils
 import lang_model
 import lang_model_vec
+from lang_model_vec import charset, indices, num_chars
 import data_processing
 import numpy as np
 
-
-def add_alpha_training(train, val, test):
+def add_alpha_training_vec(train, val, test):
     alpha_range = [1/(1.2**i) for i in range(20)]
+    print(len(val))
 
     # get optimum model through alpha grid search, perform test and save
-    probs, alpha = lang_model.train_model(train, val, alpha_range)
-    test_perplexity = data_processing.perplexity(test, probs)
+    probs, alpha = lang_model_vec.train_model(train, val, alpha_range)
+
+    test_f = data_processing.to_string(test)
+    test_ngrams = data_processing.get_ngrams(test_f, 3)
+    test_ngram_is = data_processing.ngrams_to_indices(test_ngrams, indices)
+
+    test_perplexity = data_processing.perplexity_vec(test_ngram_is, probs)
     print('******** RESULT ********')
     print('Alpha:           {}'.format(alpha))
     print('Test perplexity: {}'.format(test_perplexity))
     print('************************')
 
     return probs
+
 
 
 if len(sys.argv) <= 2:
@@ -51,9 +58,9 @@ if task == 'train':
     tr_i, val_i = int(N*.8), int(N*.9)
     train, val, test = docs[:tr_i], docs[tr_i:val_i], docs[val_i:]
 
-    probs = add_alpha_training(train, val, test)
+    probs = add_alpha_training_vec(train, val, test)
 
-    file_utils.save_model(probs, lang)
+    file_utils.save_model_vec(probs, lang)
     print('Model saved at \'data/model.{}\''.format(lang))
 
 elif task == 'generate':
@@ -62,8 +69,8 @@ elif task == 'generate':
         print('Generating needs 1 argument, got {}'.format(argnum))
 
     lang = sys.argv[2]
-    probs = file_utils.read_model(lang)
-    w_gen = lang_model.generate_from_LM(300, probs)
+    probs = file_utils.read_model_vec(lang, (num_chars, num_chars, num_chars))
+    w_gen = lang_model_vec.generate_from_LM_vec(300, probs)
     print(w_gen)
 
 elif task == 'perp':
@@ -77,9 +84,9 @@ elif task == 'perp':
 
     f_doc = data_processing.to_string(file_utils.read_file(infile))
     doc_ngrams = data_processing.get_ngrams(f_doc, 3)
-    probs = file_utils.read_model(lang)
+    probs = file_utils.read_model_vec(lang, (num_chars, num_chars, num_chars))
 
-    perplexity = data_processing.perplexity(doc_ngrams, probs)
+    perplexity = data_processing.perplexity_vec(doc_ngrams, probs)
     print('Perplexity: {}'.format(perplexity))
 
 else:

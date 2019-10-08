@@ -1,41 +1,44 @@
 from collections import defaultdict
 import re
+import data_processing
+import numpy as np
 
 charset_rgx = r'[^a-zA-Z\d .]'
 digits_rgx = r'\d'
 separator = '\t'
 
+def save_model_vec(probs, lang):
+    with open('model-vec.{}'.format(lang), 'w+') as outfile:
+        for prob in probs:
+            np.savetxt(outfile, prob)
+            outfile.write('\n')
+
+
+def read_model_vec(lang, shape):
+    probs = np.loadtxt('data/model-vec.{}'.format(lang))
+    return probs.reshape(shape)
+
 
 def save_model(probs, lang):
-    f = open('data/model.'+lang, 'w+')
-    for k, v in sorted(probs.items()):
-        for c, p in sorted(v.items()):
-            f.write('{}{}{}\n'.format(k+c, separator, p))
-    f.close()
+    with open('data/model.'+lang, 'w+') as f:
+        for k, v in sorted(probs.items()):
+            for c, p in sorted(v.items()):
+                f.write('{}{}{}\n'.format(k+c, separator, p))
 
 
 def read_model(lang):
-    f = open('data/model.'+lang, 'r')
     probs = defaultdict(dict)
-    for line in f:
-        k, v = line.split(separator)
-        c12, c3 = k[:2], k[2]
-        if c12 in probs:
-            probs[c12][c3] = float(v)
-        else:
-            new_d = {}
-            new_d[c3] = float(v)
-            probs[c12] = new_d
+    with open('data/model.'+lang, 'r') as f:
+        for line in f:
+            k, v = line.split(separator)
+            c12, c3 = k[:2], k[2]
+            if c12 in probs:
+                probs[c12][c3] = float(v)
+            else:
+                new_d = {}
+                new_d[c3] = float(v)
+                probs[c12] = new_d
     return probs
-
-
-def map_to_index(ngram, indices):
-    c0, c1, c2 = ngram
-    return (indices[c0], indices[c1], indices[c2])
-
-
-def map_to_char(index):
-    print('not implemented')
 
 
 def preprocess_line(line):
