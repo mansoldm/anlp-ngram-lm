@@ -14,6 +14,7 @@ indices = {c: i for i, c in enumerate(charset)}
 
 perms = data_processing.perms(list(charset), 3)
 
+
 def generate_from_LM_vec(N, probs):
     c0, c1 = '#', '#'
     gen_lst = [c0, c1]
@@ -83,7 +84,8 @@ def train_model(train, val, alpha_range):
         probs = add_alpha_vec(train_ngram_is, alpha)
 
         val_perplexity = data_processing.perplexity_vec(val_ngram_is, probs)
-        train_perplexity = data_processing.perplexity_vec(train_ngram_is, probs)
+        train_perplexity = data_processing.perplexity_vec(
+            train_ngram_is, probs)
         print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(
             alpha, val_perplexity, train_perplexity))
 

@@ -6,6 +6,7 @@ from lang_model_vec import charset, indices, num_chars
 import data_processing
 import numpy as np
 
+
 def add_alpha_training_vec(train, val, test):
     alpha_range = [1/(1.2**i) for i in range(20)]
 
@@ -23,7 +24,6 @@ def add_alpha_training_vec(train, val, test):
     print('************************')
 
     return probs
-
 
 
 if len(sys.argv) <= 2:

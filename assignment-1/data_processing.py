@@ -62,12 +62,13 @@ def perplexity(ngrams, probs):
 def entropy_vec(ngram_is, probs):
     N = len(ngram_is)
     log_probs = np.log2(probs)
-    ngram_probs = np.array([log_probs[i0, i1, i2] for (i0, i1, i2) in ngram_is])
+    ngram_probs = np.array([log_probs[i0, i1, i2]
+                            for (i0, i1, i2) in ngram_is])
     return -1/N * np.sum(ngram_probs)
 
 
 def perplexity_vec(ngram_is, probs):
-    return 2**entropy_vec(ngram_is, probs)    
+    return 2**entropy_vec(ngram_is, probs)
 
 
 def map_to_index(ngram, indices):
