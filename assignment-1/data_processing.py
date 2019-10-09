@@ -8,6 +8,7 @@ from collections import defaultdict
 from functools import reduce
 import itertools
 import numpy as np
+import const
 
 
 def to_string(doc):
@@ -58,20 +59,29 @@ def perplexity(ngrams, probs):
 
 
 ##### VECTORISED FUNCTIONS #####
+def indices_to_index(indices):
+    nc = const.num_chars
+    ri = reversed(range(len(indices)))
+    return sum([indices[i] * (nc ** i) for i in ri])
+
 
 def entropy_vec(ngram_is, probs):
     N = len(ngram_is)
-    log_probs = np.array(np.log2(probs))
+
+    # probs_f = probs.flatten()
+    # ngram_probs = probs[ngram_is.T]
+
     ngram_probs = []
     for indices in ngram_is:
-        logp = log_probs
+        p = probs
         for i in indices:
-            logp = logp[i]
+            p = p[i]
 
-        # logp is now a scalar
-        ngram_probs.append(logp)
-                
-    return -1/N * np.sum(ngram_probs)
+        # p is now a scalar
+        ngram_probs.append(p)
+
+    log_probs = np.array(np.log2(ngram_probs))                
+    return -1/N * np.sum(log_probs)
 
 
 def perplexity_vec(ngram_is, probs):
@@ -79,11 +89,17 @@ def perplexity_vec(ngram_is, probs):
 
 
 def map_to_index(ngram, indices):
-    return [indices[c] for c in ngram]
+    return np.array([indices[c] for c in ngram])
 
 
 def ngrams_to_indices(ngrams, indices):
-    return [map_to_index(ngram, indices) for ngram in ngrams]
+    return np.array([map_to_index(ngram, indices) for ngram in ngrams])
+
+
+def doc_to_ngram_indices(doc, n, indices):
+    sequence = to_string(doc)
+    ngrams = get_ngrams(sequence, n)
+    return ngrams_to_indices(ngrams, indices)
 
 
 def map_to_char(indexes, charset):
