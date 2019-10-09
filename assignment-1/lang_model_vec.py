@@ -14,9 +14,9 @@ char_to_index = {c: i for i, c in enumerate(charset)}
 
 
 def generate_from_LM_vec(num_to_generate, probs, n):
-    chars = '##'
-    other = ''.join([charset[randint(0, num_chars-1)] for i in range(n-3)])
-    chars += other
+    chars = '#' * (n - 1)
+    # other = ''.join([charset[randint(0, num_chars-1)] for i in range(n-3)])
+    # chars += other
     gen_lst = list(chars)
 
     # 'sliding window': indices will contain the context 
@@ -32,9 +32,6 @@ def generate_from_LM_vec(num_to_generate, probs, n):
 
         # get array of 'continuations' and keep original indices
         probs_contin = list(enumerate(probs_contin))
-
-        if probs_contin.count(probs_contin[0]) == len(probs_contin):
-            print("all equal")
 
         # sort ascendingly by probability
         sorted_tuples = sorted(probs_contin, key=lambda x: x[1])
@@ -63,8 +60,8 @@ def generate_from_LM_vec(num_to_generate, probs, n):
         indices.append(max_i)
         indices = indices[1:]
 
-    # make string and omit the starting ##
-    return ''.join(gen_lst)[2:]
+    # make string and omit the starting n-1 #'s
+    return ''.join(gen_lst)[n-1:]
 
 
 def add_alpha_vec(ngram_is, alpha, n):
@@ -75,7 +72,6 @@ def add_alpha_vec(ngram_is, alpha, n):
         for i in indices[:-1]:
             p = p[i]
         p[indices[-1]] += 1
-
     N = np.sum(probs, axis=n-1)
     probs = probs + alpha
     den = N + (alpha * num_chars)
@@ -100,7 +96,6 @@ def train_model(train, val, alpha_range, n):
     for alpha in alpha_range:
         # probs is a 3d matrix of probabilities
         probs = add_alpha_vec(train_ngram_is, alpha, n)
-
         val_perplexity = data_processing.perplexity_vec(val_ngram_is, probs)
         train_perplexity = data_processing.perplexity_vec(
             train_ngram_is, probs)

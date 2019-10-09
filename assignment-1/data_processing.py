@@ -67,10 +67,10 @@ def entropy_vec(ngram_is, probs):
         logp = log_probs
         for i in indices:
             logp = logp[i]
+
+        # logp is now a scalar
         ngram_probs.append(logp)
                 
-    # ngram_probs = np.array([log_probs[indices]
-                            # for indices in ngram_is])
     return -1/N * np.sum(ngram_probs)
 
 

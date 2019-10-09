@@ -8,7 +8,7 @@ import numpy as np
 
 
 def add_alpha_training_vec(train, val, test, n):
-    alpha_range = [1/(1.2**i) for i in range(20)]
+    alpha_range = [(2**i)/2**20 for i in range(21)]
 
     # get optimum model through alpha grid search, perform test and save
     probs, alpha = lang_model_vec.train_model(train, val, alpha_range, n)
@@ -67,6 +67,7 @@ elif task == 'generate':
 
     if argnum != 2:
         print('Generating needs 2 arguments, got {}'.format(argnum))
+        sys.exit()
 
     lang = sys.argv[2]
     n = int(sys.argv[3])
