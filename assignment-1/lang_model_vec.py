@@ -16,10 +16,7 @@ char_to_index = {c: i for i, c in enumerate(charset)}
 
 def generate_from_LM_vec(num_to_generate, probs, n):
     chars = '#' * (n - 1)
-    t = char_to_index['#']
     start_flag = [char_to_index[c] for c in chars]
-    # other = ''.join([charset[randint(0, num_chars-1)] for i in range(n-3)])
-    # chars += other
     gen_lst = list(chars)
 
     # 'sliding window': indices will contain the context 
@@ -27,11 +24,8 @@ def generate_from_LM_vec(num_to_generate, probs, n):
     indices = [i for i in start_flag]
     for _ in range(num_to_generate):
 
-        # iterate through each dimension down to the dimension of continuations
-        probs_contin = probs
-        for i in range(min(len(indices), n-1)):
-            ind = indices[i]
-            probs_contin = probs_contin[ind]
+        # get continuation probs
+        probs_contin = probs[tuple(np.transpose(indices))]
 
         # get array of 'continuations' and keep original indices
         probs_contin = list(enumerate(probs_contin))
@@ -55,19 +49,14 @@ def generate_from_LM_vec(num_to_generate, probs, n):
         max_i = sorted_tuples[rdint][0]
         max_char = charset[max_i]
 
-        if max_char == '#' and indices == start_flag:
-            max_char = ''
-        elif max_char == '#' and indices[-1] == t:
-            max_char = '\n'
-
-        gen_lst.append(str(max_char))
+        gen_lst.append(max_char)
 
         # slide window forward
         indices.append(max_i)
         indices = indices[1:]
 
     # make string and omit the starting n-1 #'s
-    return ''.join(gen_lst)[n-1:]
+    return ''.join(gen_lst)
 
 
 def test_perplexity(probs, train_ngram_is, val_ngram_is):
@@ -81,11 +70,11 @@ def test_perplexity(probs, train_ngram_is, val_ngram_is):
 def add_alpha_vec(ngram_is, alpha, n):
     probs = np.zeros((num_chars,)*n)
 
-    for indices in ngram_is:
-        p = probs
-        for i in indices[:-1]:
-            p = p[i]
-        p[indices[-1]] += 1
+    # get counts and unique ngram indices
+    ngram_indices, counts = np.unique(ngram_is, return_counts=True, axis=0)
+
+    # add each to respective location
+    probs[tuple(ngram_indices.T)] += counts
 
     N = np.sum(probs, axis=n-1)
     probs = probs + alpha
@@ -105,9 +94,6 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n):
         # probs is a 3d matrix of probabilities
         probs = add_alpha_vec(train_ngram_is, alpha, n)
         train_perplexity, val_perplexity = test_perplexity(probs, train_ngram_is, val_ngram_is)
-        # val_perplexity = data_processing.perplexity_vec(val_ngram_is, probs)
-        # train_perplexity = data_processing.perplexity_vec(
-        #     train_ngram_is, probs)
         print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(
             alpha, val_perplexity, train_perplexity))
 

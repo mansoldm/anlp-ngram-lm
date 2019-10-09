@@ -67,19 +67,7 @@ def indices_to_index(indices):
 
 def entropy_vec(ngram_is, probs):
     N = len(ngram_is)
-
-    # probs_f = probs.flatten()
-    # ngram_probs = probs[ngram_is.T]
-
-    ngram_probs = []
-    for indices in ngram_is:
-        p = probs
-        for i in indices:
-            p = p[i]
-
-        # p is now a scalar
-        ngram_probs.append(p)
-
+    ngram_probs = probs[tuple(ngram_is.T)]
     log_probs = np.array(np.log2(ngram_probs))                
     return -1/N * np.sum(log_probs)
 
@@ -109,5 +97,4 @@ def map_to_char(indexes, charset):
 def indices_to_ngrams(mat, charset, num_chars, n):
     lst = list(range(num_chars))
     cartprod = itertools.product(*(lst)*n)
-
     return [map_to_char(indices, charset) for indices in cartprod]
