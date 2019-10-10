@@ -50,6 +50,8 @@ def generate_from_LM_vec(num_to_generate, probs, n):
         max_char = charset[max_i]
 
         gen_lst.append(max_char)
+        if max_char == '#': 
+            gen_lst.append('\n')
 
         # slide window forward
         indices.append(max_i)
@@ -59,7 +61,7 @@ def generate_from_LM_vec(num_to_generate, probs, n):
     return ''.join(gen_lst)
 
 
-def test_perplexity(probs, train_ngram_is, val_ngram_is):
+def get_perplexity(probs, train_ngram_is, val_ngram_is):
     val_perplexity = data_processing.perplexity_vec(val_ngram_is, probs)
     train_perplexity = data_processing.perplexity_vec(
         train_ngram_is, probs)
@@ -84,8 +86,7 @@ def add_alpha_vec(ngram_is, alpha, n):
     return probs
 
 
-def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n):
-
+def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     # initialise to 'infinity'
     opt_perp, opt_alpha = float('inf'), float('inf')
     opt_probs = []
@@ -93,8 +94,9 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n):
     for alpha in alpha_range:
         # probs is a 3d matrix of probabilities
         probs = add_alpha_vec(train_ngram_is, alpha, n)
-        train_perplexity, val_perplexity = test_perplexity(probs, train_ngram_is, val_ngram_is)
-        print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(
+        train_perplexity, val_perplexity = get_perplexity(probs, train_ngram_is, val_ngram_is)
+        if report:
+            print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(
             alpha, val_perplexity, train_perplexity))
 
         if opt_perp > val_perplexity:
@@ -117,47 +119,59 @@ def gen_interp_lambdas(ind, lambdas, lst, n):
         gen_interp_lambdas(ind + 1, lambdas + [lambda_i], lst, n)
 
 
-def train_interp(alpha_range, train, val, n):
-    opt_perp, opt_lambdas, opt_probs = float('inf'), [], []
-    opt_alpha = float('inf')
+def train_interp(train, val1, val2, alpha_range, n):
+
+    # load 'configs' for each ngram setting
+    train_ngram_configs = [data_processing.doc_to_ngram_indices(train, i+1, char_to_index) for i in range(n)]
+    val1_ngram_configs = [data_processing.doc_to_ngram_indices(val1, i+1, char_to_index) for i in range(n)]
+
+    # get optimal alphas
+    opt_alphas, opt_probs = [], []
+    for i, train_ngram_is, val1_ngram_is in zip(range(n), train_ngram_configs, val1_ngram_configs):
+        probs, alpha = train_add_alpha(train_ngram_is, val1_ngram_is, alpha_range, i+1, report=False)
+        opt_alphas.append(alpha)
+        opt_probs.append(probs)
+
     lambda_configs = []
     gen_interp_lambdas(0, [], lambda_configs, n)
 
-    # inds = range(0, n)
-    train_ngram_configs = [data_processing.doc_to_ngram_indices(train, i, char_to_index) for i in range(1, n+1)]
-    val_ngram_configs = [data_processing.doc_to_ngram_indices(val, i, char_to_index) for i in range(1, n+1)]
-    for alpha in alpha_range:
-        for lambdas in lambda_configs:
-            probs = np.zeros((num_chars,)*n)
-            for i, lambda_i in zip(range(0, n), lambdas):
-                train_is, val_is = train_ngram_configs[i], val_ngram_configs[i]
-                prob_i = add_alpha_vec(train_is, alpha, i+1)
-                probs += lambda_i * prob_i
-
-                train_perplexity, val_perplexity = test_perplexity(probs, train_is, val_is)
-
-            print('Alpha: {}, lambdas: {}, val_perp: {}, train_perp: {}'.format(alpha, lambdas, val_perplexity, train_perplexity))
+    val2_ngram_is = data_processing.doc_to_ngram_indices(val2, n, char_to_index)
+    opt_perp, opt_lambdas = float('inf'), []
+    for i, lambdas in zip(range(n), lambda_configs):
         
-            if opt_perp > val_perplexity:
-                opt_perp = val_perplexity
-                opt_lambdas = lambdas
-                opt_probs = probs
-                opt_alpha = alpha_range
+        # multiply each set of optimal probs with its corresponding lambda 
+        weighted_probs = np.multiply(lambdas, opt_probs)
+        for i in range(n-1):
+            weighted_probs[i+1] += weighted_probs[i]        
 
-    return opt_probs, opt_lambdas, opt_alpha
+        probs = weighted_probs[-1]
+        train_perp, test_perp = get_perplexity(probs, train_ngram_is, val2_ngram_is)
 
+        print('lambdas: {}, test_perp: {}, train_perp: {}'.format(lambdas, test_perp, train_perp))
+ 
+        if opt_perp > test_perp:
+            opt_perp = test_perp
+            opt_lambdas = lambdas
+            opt_probs = probs
 
-def train_model(train, val, alpha_range, n, estimation_type):
+    # opt_perp, opt_alpha = float('inf'), 0
+    # opt_lambdas, opt_probs = [], []
+    # for alpha in alpha_range:
+    #     for lambdas in lambda_configs:
+    #         probs = np.zeros((num_chars,)*n)
+    #         for i, lambda_i in zip(range(n), lambdas):
+    #             train_is, val_is = train_ngram_configs[i], val_ngram_configs[i]
+    #             prob_i = add_alpha_vec(train_is, alpha, i+1)
+    #             probs += lambda_i * prob_i
 
-    val_f = data_processing.to_string(val)
-    val_ngrams = data_processing.get_ngrams(val_f, n)
-    val_ngram_is = data_processing.ngrams_to_indices(val_ngrams, char_to_index)
+    #             train_perplexity, val_perplexity = test_perplexity(probs, train_is, val_is)
 
-    train_f = data_processing.to_string(train)
-    train_ngrams = data_processing.get_ngrams(train_f, n)
-    train_ngram_is = data_processing.ngrams_to_indices(train_ngrams, char_to_index)
-    
-    if estimation_type == 'add_alpha':
-        return train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n)
-    elif estimation_type == 'interpolation':
-        return train_interp(alpha_range, train, val, n)
+    #         print('Alpha: {}, lambdas: {}, val_perp: {}, train_perp: {}'.format(alpha, lambdas, val_perplexity, train_perplexity))
+        
+    #         if opt_perp > val_perplexity:
+    #             opt_perp = val_perplexity
+    #             opt_lambdas = lambdas
+    #             opt_probs = probs
+    #             opt_alpha = alpha_range
+
+    return opt_probs, opt_lambdas, opt_alphas

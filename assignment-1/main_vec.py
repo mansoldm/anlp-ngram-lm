@@ -11,13 +11,13 @@ def add_alpha_training_vec(train, val, test, n):
     alpha_range = [(2**i)/2**20 for i in range(21)]
 
     # get optimum model through alpha grid search, perform test and save
-    probs, alpha = lang_model_vec.train_model(train, val, alpha_range, n, 'add_alpha')
+    train_ngram_is = data_processing.doc_to_ngram_indices(train, n, char_to_index)
+    val_ngram_is = data_processing.doc_to_ngram_indices(val, n, char_to_index)
+    probs, alpha = lang_model_vec.train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n)
 
-    test_f = data_processing.to_string(test)
-    test_ngrams = data_processing.get_ngrams(test_f, n)
-    test_ngram_is = data_processing.ngrams_to_indices(test_ngrams, char_to_index)
-
+    test_ngram_is = data_processing.doc_to_ngram_indices(test, n, char_to_index)
     test_perplexity = data_processing.perplexity_vec(test_ngram_is, probs)
+
     print('******** RESULT ********')
     print('Alpha:           {}'.format(alpha))
     print('Test perplexity: {}'.format(test_perplexity))
@@ -29,7 +29,7 @@ def add_alpha_training_vec(train, val, test, n):
 def interp_training_vec(train, val, test, n):
     alpha_range = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
 
-    probs, lambdas, alpha = lang_model_vec.train_model(train, val, alpha_range, n, 'interpolation')
+    probs, lambdas, alpha = lang_model_vec.train_interp(train, val, test, alpha_range, n)
 
     test_f = data_processing.to_string(test)
     test_ngrams = data_processing.get_ngrams(test_f, n)
@@ -92,7 +92,7 @@ if task == 'train':
     probs = train_f(train, val, test, n)
 
     file_utils.save_model_vec(probs, lang, n)
-    print('Model saved at \'data/model-vec.{}\''.format(lang))
+    print('Model saved at \'data/model-vec.{}{}\''.format(lang, n))
 
 elif task == 'generate':
 
