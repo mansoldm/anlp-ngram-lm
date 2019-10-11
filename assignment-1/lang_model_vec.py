@@ -50,17 +50,9 @@ def get_perplexity(probs, train_ngram_is, val_ngram_is):
     return train_perplexity, val_perplexity
 
 
-def add_alpha_vec(ngram_is, alpha, n):
-    probs = np.zeros((num_chars,)*n)
-
-    # get counts and unique ngram indices
-    ngram_indices, counts = np.unique(ngram_is, return_counts=True, axis=0)
-
-    # add each to respective location
-    probs[tuple(ngram_indices.T)] += counts
-
-    N = np.sum(probs, axis=n-1)
-    probs = probs + alpha
+def add_alpha_vec(counts, alpha, n):
+    N = np.sum(counts, axis=n-1)
+    probs = counts + alpha
     den = N + (alpha * num_chars)
     den_m = np.stack([den for _ in range(num_chars)], axis=n-1)
     probs = probs / den_m
@@ -72,9 +64,13 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     opt_perp, opt_alpha = float('inf'), float('inf')
     opt_probs = []
 
+    counts = np.zeros((num_chars,)*n)
+    ngram_indices, ngram_counts = np.unique(train_ngram_is, return_counts=True, axis=0)
+    counts[tuple(ngram_indices.T)] += ngram_counts
+
     for alpha in alpha_range:
         # probs is a nd matrix of probabilities
-        probs = add_alpha_vec(train_ngram_is, alpha, n)
+        probs = add_alpha_vec(counts, alpha, n)
         train_perplexity, val_perplexity = get_perplexity(
             probs, train_ngram_is, val_ngram_is)
         if report:
