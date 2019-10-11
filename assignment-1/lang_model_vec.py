@@ -19,7 +19,7 @@ def generate_from_LM_vec(num_to_generate, probs, n):
     start_flag = [char_to_index[c] for c in chars]
     gen_lst = list(chars)
 
-    # 'sliding window': indices will contain the context 
+    # 'sliding window': indices will contain the context
     # i.e. the indices of the n-1 most recent chars
     indices = [i for i in start_flag]
     for _ in range(num_to_generate):
@@ -31,7 +31,7 @@ def generate_from_LM_vec(num_to_generate, probs, n):
         max_char = charset[max_i]
 
         gen_lst.append(max_char)
-        if max_char == '#': 
+        if max_char == '#':
             gen_lst.append('\n')
 
         # slide window forward
@@ -75,10 +75,11 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     for alpha in alpha_range:
         # probs is a nd matrix of probabilities
         probs = add_alpha_vec(train_ngram_is, alpha, n)
-        train_perplexity, val_perplexity = get_perplexity(probs, train_ngram_is, val_ngram_is)
+        train_perplexity, val_perplexity = get_perplexity(
+            probs, train_ngram_is, val_ngram_is)
         if report:
             print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(
-            alpha, val_perplexity, train_perplexity))
+                alpha, val_perplexity, train_perplexity))
 
         if opt_perp > val_perplexity:
             opt_perp = val_perplexity
@@ -96,33 +97,37 @@ def gen_interp_lambdas(step, n):
 def train_interp(train, val1, val2, alpha_range, n):
 
     # load 'configs' for each ngram setting
-    train_ngram_configs = [data_processing.doc_to_ngram_indices(train, i+1, char_to_index) for i in range(n)]
-    val1_ngram_configs = [data_processing.doc_to_ngram_indices(val1, i+1, char_to_index) for i in range(n)]
+    train_ngram_configs = [data_processing.doc_to_ngram_indices(
+        train, i+1, char_to_index) for i in range(n)]
+    val1_ngram_configs = [data_processing.doc_to_ngram_indices(
+        val1, i+1, char_to_index) for i in range(n)]
 
     # get optimal alphas
     opt_alphas, add_alpha_probs = [], []
     for i, train_ngram_is, val1_ngram_is in zip(range(n), train_ngram_configs, val1_ngram_configs):
-        probs, alpha = train_add_alpha(train_ngram_is, val1_ngram_is, alpha_range, i+1, report=False)
+        probs, alpha = train_add_alpha(
+            train_ngram_is, val1_ngram_is, alpha_range, i+1, report=False)
         opt_alphas.append(alpha)
         add_alpha_probs.append(probs)
-    
-    
 
     lambda_configs = gen_interp_lambdas(10, n)
 
-    val2_ngram_is = data_processing.doc_to_ngram_indices(val2, n, char_to_index)
+    val2_ngram_is = data_processing.doc_to_ngram_indices(
+        val2, n, char_to_index)
     opt_perp, opt_lambdas = float('inf'), []
     for lambdas in lambda_configs:
-        
+
         curr_probs = [p for p in add_alpha_probs]
         res_probs = np.zeros((num_chars,)*n)
         for j in range(n):
             res_probs += lambdas[j] * curr_probs[j]
 
-        train_perp, test_perp = get_perplexity(res_probs, train_ngram_is, val2_ngram_is)
+        train_perp, test_perp = get_perplexity(
+            res_probs, train_ngram_is, val2_ngram_is)
 
-        print('lambdas: {}, test_perp: {}, train_perp: {}'.format(lambdas, test_perp, train_perp))
- 
+        print('lambdas: {}, test_perp: {}, train_perp: {}'.format(
+            lambdas, test_perp, train_perp))
+
         if opt_perp > test_perp:
             opt_perp = test_perp
             opt_lambdas = lambdas
@@ -141,7 +146,7 @@ def train_interp(train, val1, val2, alpha_range, n):
     #             train_perplexity, val_perplexity = test_perplexity(probs, train_is, val_is)
 
     #         print('Alpha: {}, lambdas: {}, val_perp: {}, train_perp: {}'.format(alpha, lambdas, val_perplexity, train_perplexity))
-        
+
     #         if opt_perp > val_perplexity:
     #             opt_perp = val_perplexity
     #             opt_lambdas = lambdas
