@@ -38,7 +38,7 @@ def interp_training_vec(train, val, test, n):
     test_perplexity = data_processing.perplexity_vec(test_ngram_is, probs)
     print('******** RESULT ********')
     print('Lambdas:          {}'.format(lambdas))
-    print('Alpha:            {}'.format(alpha))
+    print('Alphas:            {}'.format(alpha))
     print('Test perplexity:  {}'.format(test_perplexity))
     print('************************')
 

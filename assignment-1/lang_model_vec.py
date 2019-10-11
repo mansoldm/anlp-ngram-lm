@@ -69,7 +69,7 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     counts[tuple(ngram_indices.T)] += ngram_counts
 
     for alpha in alpha_range:
-        # probs is a nd matrix of probabilities
+        # probs is a n-d matrix of probabilities
         probs = add_alpha_vec(counts, alpha, n)
         train_perplexity, val_perplexity = get_perplexity(
             probs, train_ngram_is, val_ngram_is)
