@@ -27,26 +27,7 @@ def generate_from_LM_vec(num_to_generate, probs, n):
         # get continuation probs
         probs_contin = probs[tuple(np.transpose(indices))]
 
-        # get array of 'continuations' and keep original indices
-        probs_contin = list(enumerate(probs_contin))
-
-        # sort ascendingly by probability
-        sorted_tuples = sorted(probs_contin, key=lambda x: x[1])
-
-        max_p = sorted_tuples[-1][1]
-
-        j = len(sorted_tuples) - 1
-        for k in reversed(range(len(sorted_tuples))):
-            if sorted_tuples[k][1] == max_p:
-                j -= 1
-            else:
-                break
-
-        if j == len(sorted_tuples) - 1:
-            j -= np.random.randint(0, 5)
-
-        rdint = randint(j, len(sorted_tuples) - 1)
-        max_i = sorted_tuples[rdint][0]
+        max_i = np.random.choice(range(num_chars), p=probs_contin)
         max_char = charset[max_i]
 
         gen_lst.append(max_char)
@@ -92,7 +73,7 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     opt_probs = []
 
     for alpha in alpha_range:
-        # probs is a 3d matrix of probabilities
+        # probs is a nd matrix of probabilities
         probs = add_alpha_vec(train_ngram_is, alpha, n)
         train_perplexity, val_perplexity = get_perplexity(probs, train_ngram_is, val_ngram_is)
         if report:
@@ -107,16 +88,9 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     return opt_probs, opt_alpha
 
 
-def gen_interp_lambdas(ind, lambdas, lst, n):
-    if ind == n - 1 :
-        lambda_n = 1 - sum(lambdas)
-        lst.append(lambdas + [lambda_n])
-        return
-    
-    lambda_j = 0 if len(lambdas) == 0 else lambdas[-1]
-    for lambda_i in range(0, int(5 - lambda_j * 5)):
-        lambda_i /= 5
-        gen_interp_lambdas(ind + 1, lambdas + [lambda_i], lst, n)
+def gen_interp_lambdas(step, n):
+    lambda_perms = data_processing.perms(np.arange(0, 1, 1/step), n)
+    return [lambdas for lambdas in lambda_perms if sum(lambdas) == 1]
 
 
 def train_interp(train, val1, val2, alpha_range, n):
@@ -126,33 +100,33 @@ def train_interp(train, val1, val2, alpha_range, n):
     val1_ngram_configs = [data_processing.doc_to_ngram_indices(val1, i+1, char_to_index) for i in range(n)]
 
     # get optimal alphas
-    opt_alphas, opt_probs = [], []
+    opt_alphas, add_alpha_probs = [], []
     for i, train_ngram_is, val1_ngram_is in zip(range(n), train_ngram_configs, val1_ngram_configs):
         probs, alpha = train_add_alpha(train_ngram_is, val1_ngram_is, alpha_range, i+1, report=False)
         opt_alphas.append(alpha)
-        opt_probs.append(probs)
+        add_alpha_probs.append(probs)
+    
+    
 
-    lambda_configs = []
-    gen_interp_lambdas(0, [], lambda_configs, n)
+    lambda_configs = gen_interp_lambdas(10, n)
 
     val2_ngram_is = data_processing.doc_to_ngram_indices(val2, n, char_to_index)
     opt_perp, opt_lambdas = float('inf'), []
-    for i, lambdas in zip(range(n), lambda_configs):
+    for lambdas in lambda_configs:
         
-        # multiply each set of optimal probs with its corresponding lambda 
-        weighted_probs = np.multiply(lambdas, opt_probs)
-        for i in range(n-1):
-            weighted_probs[i+1] += weighted_probs[i]        
+        curr_probs = [p for p in add_alpha_probs]
+        res_probs = np.zeros((num_chars,)*n)
+        for j in range(n):
+            res_probs += lambdas[j] * curr_probs[j]
 
-        probs = weighted_probs[-1]
-        train_perp, test_perp = get_perplexity(probs, train_ngram_is, val2_ngram_is)
+        train_perp, test_perp = get_perplexity(res_probs, train_ngram_is, val2_ngram_is)
 
         print('lambdas: {}, test_perp: {}, train_perp: {}'.format(lambdas, test_perp, train_perp))
  
         if opt_perp > test_perp:
             opt_perp = test_perp
             opt_lambdas = lambdas
-            opt_probs = probs
+            opt_probs = res_probs
 
     # opt_perp, opt_alpha = float('inf'), 0
     # opt_lambdas, opt_probs = [], []

@@ -49,7 +49,7 @@ train_dict = {'add_alpha': add_alpha_training_vec, 'interpolation': interp_train
 
 if len(sys.argv) <= 2:
     print('Usage: ', sys.argv[0])
-    print('        train    <training_file> <language> <n>')
+    print('        train    <training_file> <language> <train_type> <n>')
     print('        generate <language> <n>')
     print('        perp     <document_file> <language> <n>')
     sys.exit()
