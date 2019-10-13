@@ -10,11 +10,15 @@ def add_alpha_training_vec(train, val, test, n):
     alpha_range = [(2**i)/2**20 for i in range(21)]
 
     # get optimum model through alpha grid search, perform test and save
-    train_ngram_is = data_processing_final.doc_to_ngram_indices(train, n, char_to_index)
-    val_ngram_is = data_processing_final.doc_to_ngram_indices(val, n, char_to_index)
-    probs, alpha = lang_model_final.train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n)
+    train_ngram_is = data_processing_final.doc_to_ngram_indices(
+        train, n, char_to_index)
+    val_ngram_is = data_processing_final.doc_to_ngram_indices(
+        val, n, char_to_index)
+    probs, alpha = lang_model_final.train_add_alpha(
+        train_ngram_is, val_ngram_is, alpha_range, n)
 
-    test_ngram_is = data_processing_final.doc_to_ngram_indices(test, n, char_to_index)
+    test_ngram_is = data_processing_final.doc_to_ngram_indices(
+        test, n, char_to_index)
     test_perplexity = data_processing_final.perplexity(test_ngram_is, probs)
 
     print('******** RESULT ********')
@@ -33,15 +37,17 @@ def interp_training_vec(train, val1, val2, n):
         train, i+1, char_to_index) for i in range(n)]
     val1_ngram_configs = [data_processing_final.doc_to_ngram_indices(
         val1, i+1, char_to_index) for i in range(n)]
-    
+
     # this is an array of ngram indices
     val2_ngram_is = data_processing_final.doc_to_ngram_indices(
         val2, n, char_to_index)
 
-    probs, lambdas, alpha = lang_model_final.train_interp(train_ngram_configs, val1_ngram_configs, val2_ngram_is, alpha_range, n)
+    probs, lambdas, alpha = lang_model_final.train_interp(
+        train_ngram_configs, val1_ngram_configs, val2_ngram_is, alpha_range, n)
 
     test = file_utils_final.read_file('data/test', n)
-    test_ngram_is = data_processing_final.doc_to_ngram_indices(test, n, char_to_index)
+    test_ngram_is = data_processing_final.doc_to_ngram_indices(
+        test, n, char_to_index)
 
     test_perp = data_processing_final.perplexity(test_ngram_is, probs)
     print('******** RESULT ********')
@@ -52,8 +58,9 @@ def interp_training_vec(train, val1, val2, n):
 
     return probs
 
-    
-train_dict = {'add_alpha': add_alpha_training_vec, 'interpolation': interp_training_vec}
+
+train_dict = {'add_alpha': add_alpha_training_vec,
+              'interpolation': interp_training_vec}
 
 if len(sys.argv) <= 2:
     print('Usage: ', sys.argv[0])
@@ -82,7 +89,7 @@ if task == 'train':
     if train_type not in train_dict:
         print('Training type must be either \'add_alpha\' or \'interpolation\'')
         sys.exit()
-    if n < 1 : 
+    if n < 1:
         print('The value of n must be at least 1, got {}'.format(n))
         sys.exit()
 
@@ -102,11 +109,12 @@ if task == 'train':
     if format == 'numpy':
         file_utils_final.save_model(probs, lang, n)
     elif format == 'normal':
-        file_utils_final.save_model_display(probs, lang, n, charset, char_to_index)
-    else :
+        file_utils_final.save_model_display(
+            probs, lang, n, charset, char_to_index)
+    else:
         print('Format should be \'numpy\' or \'normal\', got {}'.format(format))
         sys.exit()
- 
+
     print('Model saved in data folder.'.format(lang, n))
 
 elif task == 'generate':
@@ -119,7 +127,7 @@ elif task == 'generate':
     n = int(sys.argv[3])
     format = sys.argv[4]
 
-    if n < 1 : 
+    if n < 1:
         print('The value of n must be at least 1, got {}'.format(n))
         sys.exit()
 
@@ -129,11 +137,13 @@ elif task == 'generate':
     if format == 'numpy':
         probs = file_utils_final.read_model(lang, shape, n)
     elif format == 'normal':
-        probs = file_utils_final.read_model_display(lang, shape, n, char_to_index)
-    else :
+        probs = file_utils_final.read_model_display(
+            lang, shape, n, char_to_index)
+    else:
         print('Format should be \'numpy\' or \'normal\', got {}'.format(format))
         sys.exit()
-    w_gen = lang_model_final.generate_from_LM(300, probs, n, char_to_index, num_chars, charset)
+    w_gen = lang_model_final.generate_from_LM(
+        300, probs, n, char_to_index, num_chars, charset)
     print(w_gen)
 
 elif task == 'perp':
@@ -147,20 +157,22 @@ elif task == 'perp':
     n = int(sys.argv[4])
     format = sys.argv[5]
 
-    if n < 1 : 
+    if n < 1:
         print('The value of n must be at least 1, got {}'.format(n))
         sys.exit()
-    
+
     shape = (num_chars,) * n
 
-    doc = file_utils_final.read_file(infile, n) 
-    doc_ngram_is = data_processing_final.doc_to_ngram_indices(doc, n, char_to_index)
+    doc = file_utils_final.read_file(infile, n)
+    doc_ngram_is = data_processing_final.doc_to_ngram_indices(
+        doc, n, char_to_index)
     probs = []
     if format == 'numpy':
         probs = file_utils_final.read_model(lang, shape, n)
     elif format == 'normal':
-        probs = file_utils_final.read_model_display(lang, shape, n, char_to_index)
-    else :
+        probs = file_utils_final.read_model_display(
+            lang, shape, n, char_to_index)
+    else:
         print('Format should be \'numpy\' or \'normal\', got {}'.format(format))
         sys.exit()
 

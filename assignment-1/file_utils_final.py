@@ -7,8 +7,9 @@ charset_rgx = r'[^a-zA-Z\d .]'
 digits_rgx = r'\d'
 separator = '\t'
 
+
 def save_model_display(probs, lang, n, charset, indices):
-    ngrams = data_processing_final.perms(charset, n)    
+    ngrams = data_processing_final.perms(charset, n)
     ngram_is = data_processing_final.ngrams_to_indices(ngrams, indices)
 
     with open('data/model-display.{}.{}'.format(lang, n), 'w+') as f:

@@ -12,6 +12,7 @@ charset = ' .0abcdefghijklmnopqrstuvwxyz#'
 num_chars = len(charset)
 char_to_index = {c: i for i, c in enumerate(charset)}
 
+
 def generate_from_LM(num_to_generate, probs, n, char_to_index, num_chars, charset):
     # 'sliding window': indices will contain the context
     # i.e. the indices of the n-1 most recent chars
@@ -68,7 +69,8 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     opt_probs = []
 
     counts = np.zeros((num_chars,)*n)
-    ngram_indices, ngram_counts = np.unique(train_ngram_is, return_counts=True, axis=0)
+    ngram_indices, ngram_counts = np.unique(
+        train_ngram_is, return_counts=True, axis=0)
     counts[tuple(ngram_indices.T)] += ngram_counts
 
     for alpha in alpha_range:
@@ -89,7 +91,8 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
 
 
 def gen_interp_lambdas(step, n):
-    lambda_perms = data_processing_final.perms(np.arange(0, 1 + 1/step, 1/step), n)
+    lambda_perms = data_processing_final.perms(
+        np.arange(0, 1 + 1/step, 1/step), n)
     return [lambdas for lambdas in lambda_perms if sum(lambdas) == 1]
 
 

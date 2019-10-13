@@ -32,12 +32,12 @@ def sum_probs(probs):
 def get_ngrams(sequence, n):
     '''Generates sequence of ngrams from string'''
     return [sequence[i:i+n] for i in range(len(sequence)-n)]
-    
+
 
 def entropy(ngram_is, probs):
     N = len(ngram_is)
     ngram_probs = probs[tuple(ngram_is.T)]
-    log_probs = np.array(np.log2(ngram_probs))                
+    log_probs = np.array(np.log2(ngram_probs))
     return -1/N * np.sum(log_probs)
 
 
