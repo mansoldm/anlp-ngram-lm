@@ -115,7 +115,7 @@ if task == 'train':
         print('Format should be \'numpy\' or \'normal\', got {}'.format(format))
         sys.exit()
 
-    print('Model saved in data folder.'.format(lang, n))
+    print('Model saved in data folder.')
 
 elif task == 'generate':
 

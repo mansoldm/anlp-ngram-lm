@@ -1,4 +1,9 @@
 ## Usage
+This assumes a 'data' folder exists under the current working directory.
+
+If the format chosen is 'numpy', the program looks reads from/writes to model file `data/model-vec.<language>.<n>.npz`.
+
+If the format is 'normal',  the program reads from/writes to model file `data/model-display.<language>.<n>`.
 #### Training
 ```
 python main.py train <path/to/training/file> <language> <train_type> <n> <format>
