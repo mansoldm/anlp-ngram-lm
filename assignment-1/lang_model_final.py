@@ -55,10 +55,12 @@ def get_perplexity(probs, train_ngram_is, val_ngram_is):
 
 
 def add_alpha(counts, alpha, n):
+    # denominator: sum over all continuations + add num of chars scaled by alpha
     N = np.sum(counts, axis=n-1)
-    probs = counts + alpha
     den = N + (alpha * num_chars)
     den_m = np.stack([den for _ in range(num_chars)], axis=n-1)
+    # smooth each count in the numerator
+    probs = counts + alpha
     probs = probs / den_m
     return probs
 
@@ -68,6 +70,7 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     opt_perp, opt_alpha = float('inf'), float('inf')
     opt_probs = []
 
+    # get counts of each unique ngram in the training corpus
     counts = np.zeros((num_chars,)*n)
     ngram_indices, ngram_counts = np.unique(
         train_ngram_is, return_counts=True, axis=0)
@@ -91,6 +94,7 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
 
 
 def gen_interp_lambdas(step, n):
+    # generate unique lambda sequences which sum to 1
     lambda_perms = data_processing_final.perms(
         np.arange(0, 1 + 1/step, 1/step), n)
     return [lambdas for lambdas in lambda_perms if sum(lambdas) == 1]

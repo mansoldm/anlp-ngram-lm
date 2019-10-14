@@ -27,6 +27,7 @@ def read_model_display(lang, shape, n, char_to_index, name_stem='data/model-disp
             k = [char_to_index[c] for c in k]
             p_mat[tuple(np.transpose(k))] = float(v)
 
+    # handle zero entries so that probs sum to 1 always
     p_mat[p_mat == 0] = 1e-10
     s = np.sum(p_mat, axis=n-1)
     if np.ndim(s) == 0:
