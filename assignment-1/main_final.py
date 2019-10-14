@@ -66,7 +66,7 @@ if len(sys.argv) <= 2:
     print('Usage: ', sys.argv[0])
     print('        train    <training_file> <language> <train_type> <n> <format>')
     print('        generate <language> <n> <format>')
-    print('        perp     <document_file> <language> <n>')
+    print('        perp     <document_file> <language> <n> <format>')
     sys.exit()
 
 

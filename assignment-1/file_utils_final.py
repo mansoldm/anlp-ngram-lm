@@ -29,7 +29,10 @@ def read_model_display(lang, shape, n, char_to_index, name_stem='data/model-disp
 
     p_mat[p_mat == 0] = 1e-10
     s = np.sum(p_mat, axis=n-1)
-    s[s == 0] = 1
+    if np.ndim(s) == 0:
+        s = 1 if s == 0 else s
+    else :
+        s[s == 0] = 1
     den = np.stack([s for _ in range(len(char_to_index))], axis=n-1)
     probs = p_mat/den
     return probs
