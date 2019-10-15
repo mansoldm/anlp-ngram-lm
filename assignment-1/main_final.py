@@ -77,7 +77,7 @@ argnum = len(sys.argv) - 2
 if task == 'train':
 
     if argnum != 5:
-        print('Training needs 4 arguments, got {}'.format(argnum))
+        print('Training needs 5 arguments, got {}'.format(argnum))
         sys.exit()
 
     infile = sys.argv[2]
