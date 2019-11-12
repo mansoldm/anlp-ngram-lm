@@ -34,7 +34,7 @@ if task == 'train':
 
     # save model in specified format
     file_utils_final.save_model(format, probs, lang, n)
-    print(f'\'{format}\' model saved to data folder.'.format(format))
+    print('\'{}\' model saved to data folder.'.format(format))
 
 elif task == 'generate':
 
