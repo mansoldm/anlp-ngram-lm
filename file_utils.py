@@ -2,12 +2,12 @@ from collections import defaultdict
 import re
 import numpy as np
 
-import data_processing_final
+import data_processing
 from const import *
 
 def save_model_display(probs, lang, n, charset, indices, separator):
-    ngrams = data_processing_final.perms(charset, n)
-    ngram_is = data_processing_final.ngrams_to_indices(ngrams, indices)
+    ngrams = data_processing.perms(charset, n)
+    ngram_is = data_processing.ngrams_to_indices(ngrams, indices)
 
     with open('data/model-display.{}.{}'.format(lang, n), 'w+') as f:
         for ngram, indices in zip(ngrams, ngram_is):

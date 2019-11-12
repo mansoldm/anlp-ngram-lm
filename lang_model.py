@@ -6,8 +6,8 @@ from math import log
 from collections import defaultdict
 import numpy as np
 
-import data_processing_final
-import file_utils_final
+import data_processing
+import file_utils
 from const import charset, num_chars, char_to_index
 
 def entropy(ngram_is, probs):
@@ -28,7 +28,7 @@ def get_train_val_perplexity(probs, train_ngram_is, val_ngram_is):
     return train_perplexity, val_perplexity
 
 def get_perplexity_from_doc(doc, n, probs):
-    doc_ngram_is = data_processing_final.doc_to_ngram_indices(
+    doc_ngram_is = data_processing.doc_to_ngram_indices(
         doc, n, char_to_index)
 
     return perplexity(doc_ngram_is, probs)
@@ -109,7 +109,7 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
 
 def gen_interp_lambdas(step, n):
     # generate unique lambda sequences which sum to 1
-    lambda_perms = data_processing_final.perms(
+    lambda_perms = data_processing.perms(
         np.arange(0, 1 + 1/step, 1/step), n)
     return [lambdas for lambdas in lambda_perms if sum(lambdas) == 1]
 

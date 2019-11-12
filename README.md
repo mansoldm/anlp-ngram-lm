@@ -1,6 +1,3 @@
-# ANLP - Coursework 1
-This repository contains code for training and using an ngram language model as per the requirements of Assignment 1 for the Accelerated Natural Language Processing course (ANLP) at the University of Edinburgh.
-
 ## Usage
 A 'data' folder is assumed to exist under the current working directory.
 This folder be used to store training data (text files consisting of sentences in a particular language) as well as models
@@ -10,8 +7,8 @@ If the format is 'normal',  the program reads from/writes to model file `data/mo
 
 ### Training
 ```bash
->>> python main_final.py train -h
-usage: main_final.py train [-h] --training_file TRAINING_FILE --language
+>>> python main.py train -h
+usage: main.py train [-h] --training_file TRAINING_FILE --language
                            LANGUAGE [--train_type {interpolation,add_alpha}]
                            --n N [--format {normal,numpy}]
 
@@ -32,15 +29,15 @@ The probability matrix (i.e. the model) will be saved in `data/model-vec.<langua
 
 #### Example
 ```bash
-python main_final.py train --training_file data/training.en --language en --train_type interpolation --n 3 --format numpy
+python main.py train --training_file data/training.en --language en --train_type interpolation --n 3 --format numpy
 ```
 
 This will save the model in `data/model-vec.en.3.npz`.
 
 ### Generating
 ```bash
->>> python3.6 main_final.py generate -h
-usage: main_final.py generate [-h] --language LANGUAGE --n N
+>>> python main.py generate -h
+usage: main.py generate [-h] --language LANGUAGE --n N
                               [--format {numpy,normal}]
 
 optional arguments:
@@ -55,15 +52,15 @@ This will require the model file `data/model-vec.<language>.<n>.npz` (if the cho
 
 #### Example
 ```bash
-python main_final.py generate --language en --n 3 --format numpy
+python main.py generate --language en --n 3 --format numpy
 ```
 
 This will read the model from `data/model-vec.en.3.npz` and generate a sequence.
 
 ### Calculating perplexity
 ```bash
->>> python3.6 main_final.py perp -h
-usage: main_final.py perp [-h] --document_file DOCUMENT_FILE --language
+>>> python main.py perp -h
+usage: main.py perp [-h] --document_file DOCUMENT_FILE --language
                           LANGUAGE --n N [--format {normal,numpy}]
 
 optional arguments:
@@ -82,7 +79,7 @@ This will require the model file `data/model-vec.<language>.<n>.npz` (if the cho
 
 #### Example
 ```bash
-python main_final.py perp --document_file data/test --language en --n 3 --format numpy
+python main.py perp --document_file data/test --language en --n 3 --format numpy
 ```
 
 This will read the file `data/test`, preprocess it line-by-line, and calculate its perplexity on the model stored at `data/model-vec.en.3.npz`.
