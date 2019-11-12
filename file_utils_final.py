@@ -1,14 +1,11 @@
 from collections import defaultdict
 import re
-import data_processing_final
 import numpy as np
 
-charset_rgx = r'[^a-zA-Z\d .]'
-digits_rgx = r'\d'
-separator = '\t'
+import data_processing_final
+from const import *
 
-
-def save_model_display(probs, lang, n, charset, indices):
+def save_model_display(probs, lang, n, charset, indices, separator):
     ngrams = data_processing_final.perms(charset, n)
     ngram_is = data_processing_final.ngrams_to_indices(ngrams, indices)
 
@@ -19,7 +16,7 @@ def save_model_display(probs, lang, n, charset, indices):
             f.write('{}{}{}\n'.format(ngram_s, separator, p))
 
 
-def read_model_display(lang, shape, n, char_to_index, name_stem='data/model-display.{}.{}'):
+def read_model_display(lang, shape, n, char_to_index, separator, name_stem='data/model-display.{}.{}'):
     p_mat = np.zeros(shape)
     with open(name_stem.format(lang, n), 'r') as f:
         for line in f:
@@ -39,14 +36,32 @@ def read_model_display(lang, shape, n, char_to_index, name_stem='data/model-disp
     return probs
 
 
-def save_model(probs, lang, n):
+def save_model_vec(probs, lang, n):
     np.savez('data/model-vec.{}.{}'.format(lang, n), probs=probs)
 
 
-def read_model(lang, shape, n):
+def read_model_vec(lang, shape, n):
     p = np.load('data/model-vec.{}.{}.npz'.format(lang, n))
     probs = p['probs']
     return probs.reshape(shape)
+
+
+def save_model(format, probs, lang, n):
+    if format == 'numpy':
+        save_model_vec(probs, lang, n)
+    elif format == 'normal':
+        save_model_display(probs, lang, n, charset, char_to_index, separator)
+
+
+def read_model(format, lang, n):
+    shape = (num_chars,) * n
+    if format == 'numpy':
+        probs = read_model_vec(lang, shape, n)
+    elif format == 'normal':
+        probs = read_model_display(
+            lang, shape, n, char_to_index, separator)
+
+    return probs
 
 
 def preprocess_line(line, n):

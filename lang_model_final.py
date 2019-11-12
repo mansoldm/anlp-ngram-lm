@@ -5,15 +5,36 @@ from random import random, choice, randint
 from math import log
 from collections import defaultdict
 import numpy as np
+
 import data_processing_final
 import file_utils_final
+from const import charset, num_chars, char_to_index
 
-charset = ' .0abcdefghijklmnopqrstuvwxyz#'
-num_chars = len(charset)
-char_to_index = {c: i for i, c in enumerate(charset)}
+def entropy(ngram_is, probs):
+    N = len(ngram_is)
+    ngram_probs = probs[tuple(ngram_is.T)]
+    log_probs = np.array(np.log2(ngram_probs))
+    return -1/N * np.sum(log_probs)
 
 
-def generate_from_LM(num_to_generate, probs, n, char_to_index, num_chars, charset):
+def perplexity(ngram_is, probs):
+    return 2**entropy(ngram_is, probs)
+
+
+def get_train_val_perplexity(probs, train_ngram_is, val_ngram_is):
+    val_perplexity = perplexity(val_ngram_is, probs)
+    train_perplexity = perplexity(train_ngram_is, probs)
+
+    return train_perplexity, val_perplexity
+
+def get_perplexity_from_doc(doc, n, probs):
+    doc_ngram_is = data_processing_final.doc_to_ngram_indices(
+        doc, n, char_to_index)
+
+    return perplexity(doc_ngram_is, probs)
+
+
+def generate_from_LM(num_to_generate, probs, n):
     # 'sliding window': indices will contain the context
     # i.e. the indices of the n-1 most recent chars
     chars = '#' * (n - 1)
@@ -46,19 +67,13 @@ def generate_from_LM(num_to_generate, probs, n, char_to_index, num_chars, charse
     return ''.join(gen_lst)
 
 
-def get_perplexity(probs, train_ngram_is, val_ngram_is):
-    val_perplexity = data_processing_final.perplexity(val_ngram_is, probs)
-    train_perplexity = data_processing_final.perplexity(
-        train_ngram_is, probs)
-
-    return train_perplexity, val_perplexity
-
 
 def add_alpha(counts, alpha, n):
     # denominator: sum over all continuations + add num of chars scaled by alpha
     N = np.sum(counts, axis=n-1)
     den = N + (alpha * num_chars)
     den_m = np.stack([den for _ in range(num_chars)], axis=n-1)
+    
     # smooth each count in the numerator
     probs = counts + alpha
     probs = probs / den_m
@@ -66,7 +81,6 @@ def add_alpha(counts, alpha, n):
 
 
 def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
-    # initialise to 'infinity'
     opt_perp, opt_alpha = float('inf'), float('inf')
     opt_probs = []
 
@@ -79,7 +93,7 @@ def train_add_alpha(train_ngram_is, val_ngram_is, alpha_range, n, report=True):
     for alpha in alpha_range:
         # probs is a n-d matrix of probabilities
         probs = add_alpha(counts, alpha, n)
-        train_perplexity, val_perplexity = get_perplexity(
+        train_perplexity, val_perplexity = get_train_val_perplexity(
             probs, train_ngram_is, val_ngram_is)
         if report:
             print('alpha: {}, val_perplexity: {}, train_perplexity: {}'.format(
@@ -101,8 +115,7 @@ def gen_interp_lambdas(step, n):
 
 
 def train_interp(train_ngram_configs, val1_ngram_configs, val2_ngram_is, alpha_range, n):
-
-    # this loop uses the first validation set (val1) to get the optimal alphas
+    # get the optimal alphas using the first validation set (val1)
     opt_alphas, add_alpha_probs = [], []
     for i, train_ngram_is, val1_ngram_is in zip(range(n), train_ngram_configs, val1_ngram_configs):
         probs, alpha = train_add_alpha(
@@ -112,7 +125,7 @@ def train_interp(train_ngram_configs, val1_ngram_configs, val2_ngram_is, alpha_r
 
     lambda_configs = gen_interp_lambdas(10, n)
 
-    # this loop uses the second validation set to find the optimal lambda configurations
+    # get the optimal lambdas using the second validation set (val2)
     opt_perp, opt_lambdas = float('inf'), []
     opt_probs = np.zeros((num_chars,)*n)
     for lambdas in lambda_configs:
@@ -121,7 +134,7 @@ def train_interp(train_ngram_configs, val1_ngram_configs, val2_ngram_is, alpha_r
         for j in range(n):
             res_probs += lambdas[j] * curr_probs[j]
 
-        train_perp, val2_perp = get_perplexity(
+        train_perp, val2_perp = get_train_val_perplexity(
             res_probs, train_ngram_is, val2_ngram_is)
 
         # avoid displaying trailing zeros
